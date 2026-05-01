@@ -633,6 +633,41 @@ table.data tbody tr:hover { background: var(--surface-2); }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
 
+/* Timeline editor inside edit modal */
+.timeline-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.timeline-row:last-child { border-bottom: none; }
+.timeline-row.has-time { background: #f6fbf8; }
+.timeline-row.current { background: var(--primary-light); }
+.timeline-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.timeline-info { flex: 1; min-width: 0; }
+.timeline-label { font-weight: 500; font-size: 13px; color: var(--ink); }
+.timeline-time {
+  font-size: 12px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.timeline-row.has-time .timeline-time { color: var(--ok); }
+.timeline-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.timeline-actions .btn { font-size: 11px; padding: 4px 8px; }
+
 /* ============ TOAST ============ */
 .toast {
   position: fixed;
@@ -1124,6 +1159,7 @@ function renderCaseItem(c) {
       </div>
       <div class="case-actions">
         ${next ? `<button class="btn primary sm" data-action="advance" data-case="${c.id}" data-stage="${next.id}">→ ${escapeHtml(next.label)}</button>` : '<span class="elapsed">✓ Completed</span>'}
+        ${stage.id !== 'registered' ? `<button class="btn sm ghost" data-action="undo" data-case="${c.id}" data-stage="${stage.id}" title="Undo last stage advance">↶ Undo</button>` : ''}
         <button class="btn sm" data-action="edit" data-case="${c.id}">Edit</button>
         <button class="btn ghost sm" data-action="delete" data-case="${c.id}">✕</button>
       </div>
@@ -1144,6 +1180,23 @@ function attachStaffHandlers() {
       render();
     } catch (e) {
       toast('Failed to update: ' + e.message, 'error');
+      b.disabled = false;
+    }
+  }));
+
+  $$('[data-action="undo"]').forEach(b => b.addEventListener('click', async () => {
+    const caseId = b.dataset.case;
+    const stage = b.dataset.stage;
+    const stageLabel = STAGE_BY_ID[stage].label;
+    if (!confirm(`Undo "${stageLabel}"?\n\nThis clears the recorded time for this stage. The case will move back to the previous stage.\n\nUse this if the stage was tapped by mistake.`)) return;
+    b.disabled = true;
+    try {
+      await api('setStageTimestamp', { caseId, stage, timestamp: '' });
+      await fetchCases();
+      toast(`Cleared: ${stageLabel}`, 'success');
+      render();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
       b.disabled = false;
     }
   }));
@@ -1236,10 +1289,29 @@ function openCaseModal(existing = null) {
         </div>
         ${isEdit ? `
         <div class="field">
-          <label>Current Stage</label>
-          <select name="stage">
-            ${STAGES.map(s => `<option value="${s.id}" ${currentStage(c).id === s.id ? 'selected' : ''}>${escapeHtml(s.label)}</option>`).join('')}
-          </select>
+          <label>Stage Timeline · Click any stage to set, edit or clear its time</label>
+          <div class="timeline-editor">
+            ${STAGES.map(s => {
+              const ts = c.stages[s.id];
+              const hasTime = !!ts;
+              const timeStr = hasTime ? fmtTime(ts) : '—';
+              const isCurrent = currentStage(c).id === s.id;
+              return `
+                <div class="timeline-row ${hasTime ? 'has-time' : ''} ${isCurrent ? 'current' : ''}" data-stage="${s.id}">
+                  <div class="timeline-dot" style="background:var(--${s.color});"></div>
+                  <div class="timeline-info">
+                    <div class="timeline-label">${escapeHtml(s.label)}</div>
+                    <div class="timeline-time" id="tl-time-${s.id}">${timeStr}</div>
+                  </div>
+                  <div class="timeline-actions">
+                    <button type="button" class="btn sm" data-tl-action="now" data-stage="${s.id}" title="Set to now">Now</button>
+                    <button type="button" class="btn sm" data-tl-action="edit" data-stage="${s.id}" title="Edit time">✎</button>
+                    ${hasTime ? `<button type="button" class="btn sm ghost" data-tl-action="clear" data-stage="${s.id}" title="Clear">✕</button>` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
         </div>` : ''}
       </form>
       <div class="modal-foot">
@@ -1253,6 +1325,62 @@ function openCaseModal(existing = null) {
   const close = () => modal.remove();
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   $$('[data-close]', modal).forEach(b => b.addEventListener('click', close));
+
+  // Timeline editor handlers (only in edit mode)
+  if (isEdit) {
+    $$('[data-tl-action]', modal).forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const action = btn.dataset.tlAction;
+        const stage = btn.dataset.stage;
+        let timestamp;
+
+        if (action === 'now') {
+          timestamp = new Date().toISOString();
+        } else if (action === 'clear') {
+          if (!confirm(`Clear the "${STAGE_BY_ID[stage].label}" timestamp?\nThis removes the recorded time for this stage.`)) return;
+          timestamp = '';
+        } else if (action === 'edit') {
+          // Prompt for HH:MM, use today's date
+          const existing = c.stages[stage];
+          const defaultStr = existing
+            ? existing.toTimeString().slice(0, 5)
+            : new Date().toTimeString().slice(0, 5);
+          const input = prompt(
+            `Enter time for "${STAGE_BY_ID[stage].label}" in 24-hour format (HH:MM):\n\nExample: 14:35 for 2:35 PM\nLeave blank to cancel.`,
+            defaultStr
+          );
+          if (!input) return;
+          const m = input.trim().match(/^(\d{1,2}):(\d{2})$/);
+          if (!m) { toast('Invalid time. Use HH:MM (24-hour)', 'error'); return; }
+          const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+          if (hh > 23 || mm > 59) { toast('Invalid time', 'error'); return; }
+          // Compose with today's date
+          const d = existing ? new Date(existing) : new Date();
+          d.setHours(hh, mm, 0, 0);
+          timestamp = d.toISOString();
+        }
+
+        // Disable buttons in this row while saving
+        const row = btn.closest('.timeline-row');
+        $$('button', row).forEach(b => b.disabled = true);
+        try {
+          await api('setStageTimestamp', { caseId: c.id, stage, timestamp });
+          toast(action === 'clear' ? 'Stage cleared' : 'Stage time updated', 'success');
+          // Update local case object so the modal reflects without closing
+          if (timestamp === '') {
+            delete c.stages[stage];
+          } else {
+            c.stages[stage] = new Date(timestamp);
+          }
+          // Refresh just the timeline UI inside the modal
+          refreshTimelineUI(modal, c);
+        } catch (e) {
+          toast('Failed: ' + e.message, 'error');
+          $$('button', row).forEach(b => b.disabled = false);
+        }
+      });
+    });
+  }
 
   $('#case-save', modal).addEventListener('click', async () => {
     const form = $('#case-form', modal);
@@ -1279,6 +1407,88 @@ function openCaseModal(existing = null) {
       saveBtn.disabled = false;
       saveBtn.textContent = isEdit ? 'Save changes' : 'Add case';
     }
+  });
+}
+
+/**
+ * Re-render the timeline editor portion of the open modal after a
+ * stage change, without closing the modal. Also triggers a background
+ * refresh of the main case list.
+ */
+function refreshTimelineUI(modal, c) {
+  const editor = $('.timeline-editor', modal);
+  if (!editor) return;
+  editor.innerHTML = STAGES.map(s => {
+    const ts = c.stages[s.id];
+    const hasTime = !!ts;
+    const timeStr = hasTime ? fmtTime(ts) : '—';
+    const isCurrent = currentStage(c).id === s.id;
+    return `
+      <div class="timeline-row ${hasTime ? 'has-time' : ''} ${isCurrent ? 'current' : ''}" data-stage="${s.id}">
+        <div class="timeline-dot" style="background:var(--${s.color});"></div>
+        <div class="timeline-info">
+          <div class="timeline-label">${escapeHtml(s.label)}</div>
+          <div class="timeline-time">${timeStr}</div>
+        </div>
+        <div class="timeline-actions">
+          <button type="button" class="btn sm" data-tl-action="now" data-stage="${s.id}" title="Set to now">Now</button>
+          <button type="button" class="btn sm" data-tl-action="edit" data-stage="${s.id}" title="Edit time">✎</button>
+          ${hasTime ? `<button type="button" class="btn sm ghost" data-tl-action="clear" data-stage="${s.id}" title="Clear">✕</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Re-bind handlers on the new buttons
+  $$('[data-tl-action]', editor).forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const action = btn.dataset.tlAction;
+      const stage = btn.dataset.stage;
+      let timestamp;
+
+      if (action === 'now') {
+        timestamp = new Date().toISOString();
+      } else if (action === 'clear') {
+        if (!confirm(`Clear the "${STAGE_BY_ID[stage].label}" timestamp?\nThis removes the recorded time for this stage.`)) return;
+        timestamp = '';
+      } else if (action === 'edit') {
+        const existing = c.stages[stage];
+        const defaultStr = existing
+          ? existing.toTimeString().slice(0, 5)
+          : new Date().toTimeString().slice(0, 5);
+        const input = prompt(
+          `Enter time for "${STAGE_BY_ID[stage].label}" in 24-hour format (HH:MM):\n\nExample: 14:35 for 2:35 PM\nLeave blank to cancel.`,
+          defaultStr
+        );
+        if (!input) return;
+        const m = input.trim().match(/^(\d{1,2}):(\d{2})$/);
+        if (!m) { toast('Invalid time. Use HH:MM (24-hour)', 'error'); return; }
+        const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+        if (hh > 23 || mm > 59) { toast('Invalid time', 'error'); return; }
+        const d = existing ? new Date(existing) : new Date();
+        d.setHours(hh, mm, 0, 0);
+        timestamp = d.toISOString();
+      }
+
+      const row = btn.closest('.timeline-row');
+      $$('button', row).forEach(b => b.disabled = true);
+      try {
+        await api('setStageTimestamp', { caseId: c.id, stage, timestamp });
+        toast(action === 'clear' ? 'Stage cleared' : 'Stage time updated', 'success');
+        if (timestamp === '') {
+          delete c.stages[stage];
+        } else {
+          c.stages[stage] = new Date(timestamp);
+        }
+        refreshTimelineUI(modal, c);
+        // Also refresh the underlying case list in the background so
+        // when the modal closes, everything is in sync
+        fetchCases();
+      } catch (e) {
+        toast('Failed: ' + e.message, 'error');
+        $$('button', row).forEach(b => b.disabled = false);
+      }
+    });
   });
 }
 
