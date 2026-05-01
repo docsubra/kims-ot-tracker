@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>KIMS OT Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  /* Calm hospital palette - high readability */
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #fafbfc;
+  --border: #e3e6eb;
+  --border-strong: #c8cdd6;
+  --ink: #14181f;
+  --ink-2: #4b5563;
+  --ink-3: #8a93a3;
+  --primary: #1a4d8c;
+  --primary-dark: #0f3666;
+  --primary-light: #e8f0fa;
+
+  /* Stage colors - meaningful, distinguishable, color-blind safe */
+  --stage-registered: #6b7280;
+  --stage-preop: #d97706;
+  --stage-in-ot: #2563eb;
+  --stage-anaesthesia: #7c3aed;
+  --stage-surgery: #db2777;
+  --stage-completed: #059669;
+  --stage-pacu: #0891b2;
+  --stage-discharged: #4b5563;
+
+  --stage-registered-bg: #f3f4f6;
+  --stage-preop-bg: #fef3c7;
+  --stage-in-ot-bg: #dbeafe;
+  --stage-anaesthesia-bg: #ede9fe;
+  --stage-surgery-bg: #fce7f3;
+  --stage-completed-bg: #d1fae5;
+  --stage-pacu-bg: #cffafe;
+  --stage-discharged-bg: #f3f4f6;
+
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --warn: #d97706;
+  --warn-bg: #fef3c7;
+  --ok: #059669;
+  --ok-bg: #d1fae5;
+
+  --shadow-sm: 0 1px 2px rgba(20,24,31,0.05);
+  --shadow: 0 2px 8px rgba(20,24,31,0.08);
+  --shadow-lg: 0 8px 24px rgba(20,24,31,0.12);
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+.font-serif { font-family: 'Fraunces', 'Times New Roman', serif; font-feature-settings: 'ss01'; }
+
+/* ============ APP SHELL ============ */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: var(--shadow-sm);
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-mark {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.brand-text { line-height: 1.15; }
+.brand-text .title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 17px; }
+.brand-text .sub { font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.connection-pill {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--ok-bg);
+  color: var(--ok);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.connection-pill.offline { background: var(--danger-bg); color: var(--danger); }
+.connection-pill::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.btn:active { transform: translateY(1px); }
+.btn.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.btn.primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: white; }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.sm { font-size: 12px; padding: 6px 10px; }
+.btn.lg { font-size: 16px; padding: 12px 20px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.main {
+  flex: 1;
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  .main { padding: 12px; }
+  .brand-text .sub { display: none; }
+}
+
+/* ============ ROLE SELECT ============ */
+.role-select {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f6f8 0%, #e8f0fa 100%);
+}
+.role-card {
+  max-width: 640px;
+  width: 100%;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+}
+.role-card h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 32px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.role-card .lede { color: var(--ink-2); margin-bottom: 28px; font-size: 15px; }
+.role-grid { display: grid; gap: 12px; }
+.role-option {
+  display: flex;
+  gap: 16px;
+  padding: 18px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  font-family: inherit;
+  width: 100%;
+  align-items: center;
+}
+.role-option:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.role-option .icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.role-option .body { flex: 1; }
+.role-option .body .title { font-weight: 600; font-size: 16px; margin-bottom: 2px; }
+.role-option .body .desc { font-size: 13px; color: var(--ink-2); }
+@media (max-width: 500px) {
+  .role-card { padding: 24px; }
+  .role-card h1 { font-size: 24px; }
+}
+
+/* ============ STAFF VIEW ============ */
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  margin: 8px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.theatre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.theatre-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.theatre-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--surface-2);
+}
+.theatre-head .name {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 16px;
+}
+.theatre-head .count {
+  font-size: 11px;
+  background: var(--ink);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
+.case-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
+.case-empty {
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 13px;
+  padding: 24px 12px;
+  font-style: italic;
+}
+
+.case-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: var(--surface);
+  transition: all 0.15s ease;
+}
+.case-item:hover { border-color: var(--border-strong); }
+.case-item.active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+.case-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.case-token {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--primary-dark);
+}
+.case-name { font-size: 13px; color: var(--ink-2); margin-top: 1px; }
+.case-meta { font-size: 11px; color: var(--ink-3); margin-top: 4px; line-height: 1.4; }
+
+.stage-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.case-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.case-actions .btn { font-size: 11px; padding: 5px 9px; }
+
+.elapsed {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.elapsed.warn { color: var(--warn); font-weight: 600; }
+.elapsed.danger { color: var(--danger); font-weight: 700; }
+
+/* ============ ADMIN DASHBOARD ============ */
+.admin-grid { display: grid; gap: 14px; }
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.kpi .label {
+  font-size: 11px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.kpi .value {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi .sub { font-size: 11px; color: var(--ink-2); margin-top: 2px; }
+.kpi.accent .value { color: var(--primary); }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.panel-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.theatre-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.board-tile {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: var(--surface-2);
+}
+.board-tile .room {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.board-tile .occupant { font-size: 13px; }
+.board-tile.empty .occupant { color: var(--ink-3); font-style: italic; }
+.board-tile .stage-line { font-size: 11px; margin-top: 4px; color: var(--ink-2); }
+
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; height: 260px; }
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+table.data th, table.data td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+table.data th {
+  font-weight: 600;
+  color: var(--ink-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--surface-2);
+}
+table.data tbody tr:hover { background: var(--surface-2); }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ============ LOBBY DISPLAY ============ */
+.lobby {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f1828 0%, #1a2942 100%);
+  color: white;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.lobby-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.lobby-head h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 38px;
+  letter-spacing: -0.02em;
+}
+.lobby-head .sub {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+.lobby-clock {
+  text-align: right;
+  font-family: 'Fraunces', serif;
+}
+.lobby-clock .time { font-size: 38px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lobby-clock .date { font-size: 14px; opacity: 0.7; }
+
+.lobby-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+.lobby-tile {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 20px 22px;
+  backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
+}
+.lobby-tile.updated {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.3);
+  transform: scale(1.01);
+}
+.lobby-tile .token {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 36px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.lobby-tile .surgeon {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-top: 6px;
+  margin-bottom: 14px;
+}
+.lobby-tile .status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lobby-tile .stage-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px currentColor;
+}
+.lobby-tile .stage-text {
+  font-size: 18px;
+  font-weight: 500;
+}
+.lobby-tile .since {
+  font-size: 12px;
+  opacity: 0.5;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.lobby-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 80px 20px;
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  opacity: 0.4;
+}
+
+.lobby-foot {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* ============ MODAL ============ */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(20,24,31,0.6);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-head h2 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 20px;
+}
+.modal-body { padding: 22px; }
+.modal-foot {
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--surface-2);
+}
+
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border 0.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+
+/* ============ TOAST ============ */
+.toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.toast.error { background: var(--danger); }
+.toast.success { background: var(--ok); }
+
+/* ============ PIN LOCK ============ */
+.pin-lock {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f6f8 0%, #e8f0fa 100%);
+}
+.pin-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.pin-card h2 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.pin-card p { color: var(--ink-2); font-size: 14px; margin-bottom: 20px; }
+.pin-input {
+  font-size: 28px !important;
+  text-align: center;
+  letter-spacing: 0.4em;
+  font-family: 'Fraunces', serif !important;
+  font-weight: 600;
+}
+
+/* ============ SETUP NOTICE ============ */
+.setup-notice {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Loader */
+.loader {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 40px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ink-3);
+}
+.empty-state .big {
+  font-family: 'Fraunces', serif;
+  font-size: 42px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===========================================================
+   KIMS OT TRACKER
+   Department of Anaesthesia, KIMS Hospital, Mahadevapura
+   Single-file HTML app. Backend: Google Apps Script + Sheet.
+   =========================================================== */
+
+/* ---------- CONFIGURATION ---------- */
+const CONFIG = {
+  // Paste your Apps Script Web App URL here after deployment.
+  // It will look like: https://script.google.com/macros/s/AKfycb.../exec
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyELIcJJGOoHdJ6MlyEMrmPrWPxPgo-qpY5B95nXLzCtJbb7q7uAup_d4LHGzEO7GPlCQ/exec',
+
+  // Staff PIN. Change after first deployment. The PIN is also enforced
+  // on the Apps Script side as a second layer.
+  STAFF_PIN: '4321',
+
+  // Pilot configuration: start with 2 theatres. Add more later as
+  // simply as: ['OT-1', 'OT-2', 'OT-3', 'OT-4', 'OT-5', 'OT-6', 'OT-7']
+  THEATRES: ['OT-1', 'OT-2'],
+
+  // How often the lobby/admin views auto-refresh (milliseconds)
+  REFRESH_MS: 15000,
+
+  HOSPITAL_NAME: 'KIMS Hospital, Mahadevapura',
+  DEPARTMENT_NAME: 'Department of Anaesthesia',
+};
+
+/* ---------- STAGES ---------- */
+// Stage order matters - it defines the patient's forward flow.
+const STAGES = [
+  { id: 'registered',   label: 'Registered',           lobby: 'Awaiting pre-op',         color: 'stage-registered' },
+  { id: 'preop',        label: 'In Pre-Op',            lobby: 'In Pre-Operation',        color: 'stage-preop' },
+  { id: 'in_ot',        label: 'In OT',                lobby: 'Moved to Operation Theatre', color: 'stage-in-ot' },
+  { id: 'anaesthesia',  label: 'Anaesthesia Started',  lobby: 'Preparation underway',    color: 'stage-anaesthesia' },
+  { id: 'surgery',      label: 'Surgery Started',      lobby: 'Surgery in progress',     color: 'stage-surgery' },
+  { id: 'completed',    label: 'Surgery Completed',    lobby: 'Surgery complete',        color: 'stage-completed' },
+  { id: 'pacu',         label: 'In PACU',              lobby: 'In Recovery (PACU)',      color: 'stage-pacu' },
+  { id: 'discharged',   label: 'Shifted to Ward',      lobby: 'Moved to Ward',           color: 'stage-discharged' },
+];
+const STAGE_BY_ID = Object.fromEntries(STAGES.map(s => [s.id, s]));
+const STAGE_INDEX = Object.fromEntries(STAGES.map((s, i) => [s.id, i]));
+
+const SPECIALTIES = [
+  'General Surgery', 'Orthopaedics', 'Obstetrics & Gynaecology', 'Urology',
+  'ENT', 'Ophthalmology', 'Plastic Surgery', 'Neurosurgery', 'Cardiothoracic',
+  'Vascular', 'Paediatric Surgery', 'Dental/Maxillofacial', 'Endoscopy', 'Other'
+];
+
+/* ---------- STATE ---------- */
+const state = {
+  view: null,           // 'staff' | 'admin' | 'lobby' | null (= role select)
+  pinUnlocked: false,
+  cases: [],            // array of case objects from backend
+  loading: false,
+  lastFetch: null,
+  online: true,
+  selectedCaseId: null,
+  charts: {},
+};
+
+/* ---------- UTILITIES ---------- */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+function getViewFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const v = (params.get('view') || '').toLowerCase();
+  return ['staff', 'admin', 'lobby'].includes(v) ? v : null;
+}
+
+function setUrlView(v) {
+  const url = new URL(window.location);
+  if (v) url.searchParams.set('view', v); else url.searchParams.delete('view');
+  window.history.replaceState({}, '', url);
+}
+
+function fmtTime(d) {
+  if (!d) return '—';
+  const dt = (d instanceof Date) ? d : new Date(d);
+  if (isNaN(dt)) return '—';
+  return dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = (d instanceof Date) ? d : new Date(d);
+  return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function fmtDuration(ms) {
+  if (ms == null || isNaN(ms) || ms < 0) return '—';
+  const totalMin = Math.floor(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+function todayISO() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+function generateToken() {
+  // OT-token like OT-247 - based on time so it's roughly sequential and short
+  const seed = Math.floor(Date.now() / 1000) % 1000;
+  return `OT-${seed.toString().padStart(3, '0')}`;
+}
+
+function toast(msg, type = '') {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.className = 'toast'; }, 2400);
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- BACKEND ---------- */
+async function api(action, payload = {}) {
+  if (!CONFIG.APPS_SCRIPT_URL) {
+    throw new Error('Backend not configured. Please set APPS_SCRIPT_URL.');
+  }
+  const url = CONFIG.APPS_SCRIPT_URL;
+  const body = JSON.stringify({ action, pin: CONFIG.STAFF_PIN, ...payload });
+
+  // Use no-cors-friendly text/plain to avoid CORS preflight on Apps Script
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body
+  });
+  if (!res.ok) throw new Error(`Network error: ${res.status}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Backend error');
+  return data;
+}
+
+async function fetchCases() {
+  state.loading = true;
+  try {
+    const data = await api('list', { date: todayISO() });
+    state.cases = (data.cases || []).map(normalizeCase);
+    state.lastFetch = new Date();
+    state.online = true;
+  } catch (e) {
+    state.online = false;
+    if (state.cases.length === 0) {
+      // First load failed - leave cases empty
+    }
+    console.error(e);
+  } finally {
+    state.loading = false;
+  }
+}
+
+function normalizeCase(c) {
+  // Make sure timestamps are Date objects
+  const stages = {};
+  STAGES.forEach(s => {
+    if (c[`t_${s.id}`]) stages[s.id] = new Date(c[`t_${s.id}`]);
+  });
+  return { ...c, stages };
+}
+
+async function createCase(payload) {
+  const data = await api('create', { ...payload, date: todayISO() });
+  await fetchCases();
+  return data;
+}
+
+async function updateStage(caseId, stage) {
+  await api('updateStage', { caseId, stage, timestamp: new Date().toISOString() });
+  await fetchCases();
+}
+
+async function deleteCase(caseId) {
+  await api('delete', { caseId });
+  await fetchCases();
+}
+
+/* ---------- CASE HELPERS ---------- */
+function currentStage(c) {
+  // Find the latest stage that has a timestamp
+  let latest = STAGES[0];
+  for (const s of STAGES) {
+    if (c.stages[s.id]) latest = s;
+  }
+  return latest;
+}
+
+function nextStage(c) {
+  const cur = currentStage(c);
+  const idx = STAGE_INDEX[cur.id];
+  return STAGES[idx + 1] || null;
+}
+
+function timeSinceStage(c, stageId) {
+  if (!c.stages[stageId]) return null;
+  return Date.now() - c.stages[stageId].getTime();
+}
+
+function totalDuration(c, fromStage, toStage) {
+  if (!c.stages[fromStage] || !c.stages[toStage]) return null;
+  return c.stages[toStage].getTime() - c.stages[fromStage].getTime();
+}
+
+function isFinished(c) {
+  return !!(c.stages.discharged || c.stages.pacu);
+}
+
+function casesByTheatre() {
+  const map = {};
+  CONFIG.THEATRES.forEach(t => map[t] = []);
+  state.cases.forEach(c => {
+    if (!map[c.theatre]) map[c.theatre] = [];
+    map[c.theatre].push(c);
+  });
+  Object.values(map).forEach(arr => arr.sort((a, b) => new Date(a.created) - new Date(b.created)));
+  return map;
+}
+
+/* =========================================================
+   ROUTING / RENDER ENTRY POINT
+   ========================================================= */
+function render() {
+  const root = $('#app');
+  if (!state.view) { root.innerHTML = renderRoleSelect(); attachRoleHandlers(); return; }
+  if (state.view === 'staff' && !state.pinUnlocked) { root.innerHTML = renderPinLock(); attachPinHandlers(); return; }
+  if (state.view === 'staff') { root.innerHTML = renderStaff(); attachStaffHandlers(); return; }
+  if (state.view === 'admin') { root.innerHTML = renderAdmin(); attachAdminHandlers(); return; }
+  if (state.view === 'lobby') { root.innerHTML = renderLobby(); attachLobbyHandlers(); return; }
+}
+
+/* =========================================================
+   ROLE SELECT
+   ========================================================= */
+function renderRoleSelect() {
+  return `
+    <div class="role-select">
+      <div class="role-card">
+        <h1>KIMS OT Tracker</h1>
+        <p class="lede">${escapeHtml(CONFIG.DEPARTMENT_NAME)} · ${escapeHtml(CONFIG.HOSPITAL_NAME)}</p>
+        <div class="role-grid">
+          <button class="role-option" data-role="staff">
+            <div class="icon">🩺</div>
+            <div class="body">
+              <div class="title">Staff View</div>
+              <div class="desc">For OT coordinators and nurses · PIN required</div>
+            </div>
+          </button>
+          <button class="role-option" data-role="admin">
+            <div class="icon">📊</div>
+            <div class="body">
+              <div class="title">Admin Dashboard</div>
+              <div class="desc">Live theatre board, KPIs and analytics · HOD only</div>
+            </div>
+          </button>
+          <button class="role-option" data-role="lobby">
+            <div class="icon">🖥️</div>
+            <div class="body">
+              <div class="title">Patient Lobby Display</div>
+              <div class="desc">Family waiting screen · Auto-refresh, no controls</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function attachRoleHandlers() {
+  $$('.role-option').forEach(b => b.addEventListener('click', () => {
+    const role = b.dataset.role;
+    state.view = role;
+    setUrlView(role);
+    render();
+    if (role !== 'staff' || state.pinUnlocked) {
+      fetchCases().then(render);
+      startAutoRefresh();
+    }
+  }));
+}
+
+/* =========================================================
+   PIN LOCK (staff)
+   ========================================================= */
+function renderPinLock() {
+  return `
+    <div class="pin-lock">
+      <div class="pin-card">
+        <h2>Staff Access</h2>
+        <p>Enter the staff PIN to update patient stages.</p>
+        <div class="field">
+          <input type="password" id="pin-input" class="pin-input" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••">
+        </div>
+        <button class="btn primary lg" id="pin-submit" style="width:100%">Unlock</button>
+        <button class="btn ghost" id="pin-back" style="width:100%; margin-top:8px;">← Back</button>
+      </div>
+    </div>
+  `;
+}
+function attachPinHandlers() {
+  const input = $('#pin-input');
+  input.focus();
+  const submit = () => {
+    if (input.value === CONFIG.STAFF_PIN) {
+      state.pinUnlocked = true;
+      render();
+      fetchCases().then(render);
+      startAutoRefresh();
+    } else {
+      toast('Incorrect PIN', 'error');
+      input.value = '';
+      input.focus();
+    }
+  };
+  $('#pin-submit').addEventListener('click', submit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  $('#pin-back').addEventListener('click', () => { state.view = null; setUrlView(null); render(); });
+}
+
+/* =========================================================
+   STAFF VIEW
+   ========================================================= */
+function renderStaff() {
+  const setupOk = !!CONFIG.APPS_SCRIPT_URL;
+  const groups = casesByTheatre();
+  const totalToday = state.cases.length;
+  const ongoing = state.cases.filter(c => !isFinished(c)).length;
+
+  return `
+    <div class="app">
+      ${renderTopbar('Staff View')}
+      <div class="main">
+        ${!setupOk ? renderSetupNotice() : ''}
+        <div class="section-title">
+          <span>Today's Cases · ${ongoing} ongoing · ${totalToday} total</span>
+          <button class="btn primary" id="add-case">+ New Case</button>
+        </div>
+        ${state.loading && state.cases.length === 0 ? '<div class="loader"></div>' :
+          (state.cases.length === 0 && setupOk
+            ? `<div class="empty-state"><div class="big">🩺</div><div>No cases yet today.<br>Tap <strong>+ New Case</strong> to add the first patient.</div></div>`
+            : `<div class="theatre-grid">${CONFIG.THEATRES.map(t => renderTheatreCard(t, groups[t] || [])).join('')}</div>`)
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderTheatreCard(theatre, cases) {
+  const ongoing = cases.filter(c => !isFinished(c));
+  return `
+    <div class="theatre-card">
+      <div class="theatre-head">
+        <div class="name">${escapeHtml(theatre)}</div>
+        <div class="count">${ongoing.length} active</div>
+      </div>
+      <div class="case-list">
+        ${cases.length === 0
+          ? '<div class="case-empty">No cases yet</div>'
+          : cases.map(renderCaseItem).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderCaseItem(c) {
+  const stage = currentStage(c);
+  const next = nextStage(c);
+  const since = timeSinceStage(c, stage.id);
+  const elapsed = since != null ? fmtDuration(since) : '';
+  let elapsedClass = '';
+  // If patient has been in OT for >2h or pre-op for >1h, flag
+  if (stage.id === 'preop' && since > 60 * 60 * 1000) elapsedClass = 'warn';
+  if (stage.id === 'in_ot' && since > 30 * 60 * 1000) elapsedClass = 'warn';
+  if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) elapsedClass = 'danger';
+
+  return `
+    <div class="case-item" data-case="${c.id}">
+      <div class="case-header">
+        <div>
+          <div class="case-token">${escapeHtml(c.token || '')}</div>
+          <div class="case-name">${escapeHtml(c.patientName || '—')}</div>
+          <div class="case-meta">
+            ${escapeHtml(c.surgeon || 'Surgeon —')} · ${escapeHtml(c.procedure || c.specialty || '—')}<br>
+            <span class="elapsed ${elapsedClass}">${escapeHtml(stage.label)} · ${elapsed}</span>
+          </div>
+        </div>
+        <span class="stage-badge" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">
+          ${escapeHtml(stage.label)}
+        </span>
+      </div>
+      <div class="case-actions">
+        ${next ? `<button class="btn primary sm" data-action="advance" data-case="${c.id}" data-stage="${next.id}">→ ${escapeHtml(next.label)}</button>` : '<span class="elapsed">✓ Completed</span>'}
+        <button class="btn sm" data-action="edit" data-case="${c.id}">Edit</button>
+        <button class="btn ghost sm" data-action="delete" data-case="${c.id}">✕</button>
+      </div>
+    </div>
+  `;
+}
+
+function attachStaffHandlers() {
+  $('#add-case')?.addEventListener('click', () => openCaseModal());
+
+  $$('[data-action="advance"]').forEach(b => b.addEventListener('click', async () => {
+    const caseId = b.dataset.case;
+    const stage = b.dataset.stage;
+    b.disabled = true;
+    try {
+      await updateStage(caseId, stage);
+      toast(`Stage updated: ${STAGE_BY_ID[stage].label}`, 'success');
+      render();
+    } catch (e) {
+      toast('Failed to update: ' + e.message, 'error');
+      b.disabled = false;
+    }
+  }));
+
+  $$('[data-action="edit"]').forEach(b => b.addEventListener('click', () => {
+    const c = state.cases.find(x => x.id === b.dataset.case);
+    if (c) openCaseModal(c);
+  }));
+
+  $$('[data-action="delete"]').forEach(b => b.addEventListener('click', async () => {
+    const c = state.cases.find(x => x.id === b.dataset.case);
+    if (!c) return;
+    if (!confirm(`Delete case ${c.token} (${c.patientName})?\nThis cannot be undone.`)) return;
+    try {
+      await deleteCase(c.id);
+      toast('Case deleted');
+      render();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  }));
+
+  attachTopbarHandlers();
+}
+
+/* ---------- CASE MODAL ---------- */
+function openCaseModal(existing = null) {
+  const c = existing || {};
+  const isEdit = !!existing;
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h2>${isEdit ? 'Edit Case' : 'New Case'}</h2>
+        <button class="btn ghost" data-close>✕</button>
+      </div>
+      <form class="modal-body" id="case-form">
+        <div class="field-row">
+          <div class="field">
+            <label>Token</label>
+            <input name="token" required value="${escapeHtml(c.token || generateToken())}">
+          </div>
+          <div class="field">
+            <label>Theatre</label>
+            <select name="theatre" required>
+              ${CONFIG.THEATRES.map(t => `<option value="${escapeHtml(t)}" ${c.theatre === t ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Patient Name</label>
+          <input name="patientName" required value="${escapeHtml(c.patientName || '')}" placeholder="e.g. Mr. Sharma R.">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Age</label>
+            <input name="age" type="number" min="0" max="120" value="${escapeHtml(c.age || '')}">
+          </div>
+          <div class="field">
+            <label>Sex</label>
+            <select name="sex">
+              <option value="">—</option>
+              <option ${c.sex === 'M' ? 'selected' : ''}>M</option>
+              <option ${c.sex === 'F' ? 'selected' : ''}>F</option>
+              <option ${c.sex === 'Other' ? 'selected' : ''}>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Surgeon</label>
+          <input name="surgeon" value="${escapeHtml(c.surgeon || '')}" placeholder="e.g. Dr. Rajesh Kumar">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Specialty</label>
+            <select name="specialty">
+              <option value="">—</option>
+              ${SPECIALTIES.map(s => `<option ${c.specialty === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Anaesthetist</label>
+            <input name="anaesthetist" value="${escapeHtml(c.anaesthetist || '')}" placeholder="e.g. Dr. Mahankali">
+          </div>
+        </div>
+        <div class="field">
+          <label>Procedure</label>
+          <input name="procedure" value="${escapeHtml(c.procedure || '')}" placeholder="e.g. Lap. cholecystectomy">
+        </div>
+        ${isEdit ? `
+        <div class="field">
+          <label>Current Stage</label>
+          <select name="stage">
+            ${STAGES.map(s => `<option value="${s.id}" ${currentStage(c).id === s.id ? 'selected' : ''}>${escapeHtml(s.label)}</option>`).join('')}
+          </select>
+        </div>` : ''}
+      </form>
+      <div class="modal-foot">
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary" id="case-save">${isEdit ? 'Save changes' : 'Add case'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  $$('[data-close]', modal).forEach(b => b.addEventListener('click', close));
+
+  $('#case-save', modal).addEventListener('click', async () => {
+    const form = $('#case-form', modal);
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd.entries());
+    if (!payload.token || !payload.patientName || !payload.theatre) {
+      toast('Token, patient name and theatre required', 'error'); return;
+    }
+    const saveBtn = $('#case-save', modal);
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      if (isEdit) {
+        await api('update', { caseId: c.id, ...payload });
+      } else {
+        await createCase(payload);
+      }
+      await fetchCases();
+      toast(isEdit ? 'Case updated' : 'Case added', 'success');
+      close();
+      render();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+      saveBtn.disabled = false;
+      saveBtn.textContent = isEdit ? 'Save changes' : 'Add case';
+    }
+  });
+}
+
+/* =========================================================
+   ADMIN DASHBOARD
+   ========================================================= */
+function renderAdmin() {
+  const setupOk = !!CONFIG.APPS_SCRIPT_URL;
+  const cases = state.cases;
+  const ongoing = cases.filter(c => !isFinished(c));
+  const completed = cases.filter(c => isFinished(c));
+
+  // KPIs
+  const avgPreop = avgDuration(cases, 'preop', 'in_ot');
+  const avgInductionTime = avgDuration(cases, 'in_ot', 'anaesthesia');
+  const avgSurgery = avgDuration(cases, 'surgery', 'completed');
+  const avgTotal = avgDuration(cases, 'preop', 'pacu');
+  const turnoverPerTheatre = computeTurnover(cases);
+  const avgTurnover = avgOf(Object.values(turnoverPerTheatre).flat());
+
+  return `
+    <div class="app">
+      ${renderTopbar('Admin Dashboard')}
+      <div class="main">
+        ${!setupOk ? renderSetupNotice() : ''}
+        <div class="admin-grid">
+          <div class="kpi-row">
+            <div class="kpi accent">
+              <div class="label">Today's cases</div>
+              <div class="value">${cases.length}</div>
+              <div class="sub">${ongoing.length} ongoing · ${completed.length} completed</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Avg. Pre-op wait</div>
+              <div class="value">${fmtDuration(avgPreop)}</div>
+              <div class="sub">From pre-op to OT</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Avg. Induction</div>
+              <div class="value">${fmtDuration(avgInductionTime)}</div>
+              <div class="sub">OT in → Anaesthesia</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Avg. Surgery</div>
+              <div class="value">${fmtDuration(avgSurgery)}</div>
+              <div class="sub">Knife-to-skin closure</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Avg. Turnover</div>
+              <div class="value">${fmtDuration(avgTurnover)}</div>
+              <div class="sub">Between cases (same OT)</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">
+              <span>Live Theatre Board</span>
+              <span class="elapsed">Auto-refresh every ${CONFIG.REFRESH_MS/1000}s</span>
+            </div>
+            <div class="theatre-board">
+              ${CONFIG.THEATRES.map(t => renderBoardTile(t, cases)).join('')}
+            </div>
+          </div>
+
+          <div class="chart-row">
+            <div class="panel">
+              <div class="panel-title">Cases per Theatre</div>
+              <div class="chart-wrap"><canvas id="ch-theatre"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">Stage Distribution</div>
+              <div class="chart-wrap"><canvas id="ch-stage"></canvas></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">All Cases Today</div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th>Token</th>
+                    <th>Patient</th>
+                    <th>Theatre</th>
+                    <th>Surgeon</th>
+                    <th>Procedure</th>
+                    <th>Stage</th>
+                    <th>Pre-op</th>
+                    <th>OT in</th>
+                    <th>Anaesth.</th>
+                    <th>Surgery</th>
+                    <th>Done</th>
+                    <th>Surgery dur.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${cases.length === 0
+                    ? `<tr><td colspan="12" style="text-align:center; padding:30px; color:var(--ink-3);">No cases yet today</td></tr>`
+                    : cases.map(c => {
+                        const stage = currentStage(c);
+                        const sd = totalDuration(c, 'surgery', 'completed');
+                        return `
+                          <tr>
+                            <td><strong>${escapeHtml(c.token)}</strong></td>
+                            <td>${escapeHtml(c.patientName || '')}</td>
+                            <td>${escapeHtml(c.theatre)}</td>
+                            <td>${escapeHtml(c.surgeon || '—')}</td>
+                            <td>${escapeHtml(c.procedure || '—')}</td>
+                            <td><span class="stage-badge" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span></td>
+                            <td>${fmtTime(c.stages.preop)}</td>
+                            <td>${fmtTime(c.stages.in_ot)}</td>
+                            <td>${fmtTime(c.stages.anaesthesia)}</td>
+                            <td>${fmtTime(c.stages.surgery)}</td>
+                            <td>${fmtTime(c.stages.completed)}</td>
+                            <td>${fmtDuration(sd)}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="export-csv">⬇ Export CSV</button>
+              <button class="btn" id="print-report">🖨 Print report</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderBoardTile(theatre, cases) {
+  const ongoing = cases.filter(c => c.theatre === theatre && !isFinished(c));
+  const active = ongoing[0];
+  if (!active) {
+    return `<div class="board-tile empty">
+      <div class="room">${escapeHtml(theatre)}</div>
+      <div class="occupant">Available</div>
+    </div>`;
+  }
+  const stage = currentStage(active);
+  const since = timeSinceStage(active, stage.id);
+  return `<div class="board-tile" style="border-left:4px solid var(--${stage.color});">
+    <div class="room">${escapeHtml(theatre)} · ${escapeHtml(active.token)}</div>
+    <div class="occupant">${escapeHtml(active.patientName || '—')}</div>
+    <div class="stage-line">
+      <span class="stage-badge" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span>
+      · ${fmtDuration(since)}
+    </div>
+    ${active.surgeon ? `<div class="stage-line">${escapeHtml(active.surgeon)}${active.procedure ? ' · ' + escapeHtml(active.procedure) : ''}</div>` : ''}
+  </div>`;
+}
+
+function attachAdminHandlers() {
+  attachTopbarHandlers();
+  // Charts
+  drawTheatreChart();
+  drawStageChart();
+
+  $('#export-csv')?.addEventListener('click', exportCsv);
+  $('#print-report')?.addEventListener('click', () => window.print());
+}
+
+function drawTheatreChart() {
+  const ctx = $('#ch-theatre');
+  if (!ctx) return;
+  const counts = CONFIG.THEATRES.map(t => state.cases.filter(c => c.theatre === t).length);
+  if (state.charts.theatre) state.charts.theatre.destroy();
+  state.charts.theatre = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: CONFIG.THEATRES,
+      datasets: [{
+        label: 'Cases',
+        data: counts,
+        backgroundColor: '#1a4d8c',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+}
+
+function drawStageChart() {
+  const ctx = $('#ch-stage');
+  if (!ctx) return;
+  const counts = STAGES.map(s => state.cases.filter(c => currentStage(c).id === s.id).length);
+  const colors = ['#6b7280', '#d97706', '#2563eb', '#7c3aed', '#db2777', '#059669', '#0891b2', '#4b5563'];
+  if (state.charts.stage) state.charts.stage.destroy();
+  state.charts.stage = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: STAGES.map(s => s.label),
+      datasets: [{ data: counts, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 11 } } } }
+    }
+  });
+}
+
+function exportCsv() {
+  const rows = [
+    ['Token', 'Patient', 'Age', 'Sex', 'Theatre', 'Surgeon', 'Specialty', 'Procedure', 'Anaesthetist',
+     ...STAGES.map(s => s.label), 'Surgery duration (min)', 'Total duration (min)']
+  ];
+  state.cases.forEach(c => {
+    const sd = totalDuration(c, 'surgery', 'completed');
+    const td = totalDuration(c, 'preop', 'pacu') || totalDuration(c, 'preop', 'completed');
+    rows.push([
+      c.token, c.patientName, c.age || '', c.sex || '', c.theatre, c.surgeon || '', c.specialty || '',
+      c.procedure || '', c.anaesthetist || '',
+      ...STAGES.map(s => c.stages[s.id] ? c.stages[s.id].toLocaleTimeString('en-IN') : ''),
+      sd != null ? Math.round(sd / 60000) : '',
+      td != null ? Math.round(td / 60000) : ''
+    ]);
+  });
+  const csv = rows.map(r => r.map(v => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `KIMS-OT-${todayISO()}.csv`;
+  a.click();
+}
+
+function avgDuration(cases, fromStage, toStage) {
+  const arr = [];
+  cases.forEach(c => {
+    const d = totalDuration(c, fromStage, toStage);
+    if (d != null && d > 0) arr.push(d);
+  });
+  return avgOf(arr);
+}
+function avgOf(arr) {
+  if (!arr.length) return null;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+function computeTurnover(cases) {
+  const byTheatre = {};
+  CONFIG.THEATRES.forEach(t => byTheatre[t] = []);
+  CONFIG.THEATRES.forEach(t => {
+    const inTheatre = cases.filter(c => c.theatre === t)
+      .sort((a, b) => (a.stages.in_ot || new Date(0)) - (b.stages.in_ot || new Date(0)));
+    for (let i = 1; i < inTheatre.length; i++) {
+      const prev = inTheatre[i - 1];
+      const next = inTheatre[i];
+      // Turnover = previous patient OUT (pacu or completed) -> next patient IN (in_ot)
+      const out = prev.stages.pacu || prev.stages.completed;
+      const inT = next.stages.in_ot;
+      if (out && inT && inT > out) byTheatre[t].push(inT - out);
+    }
+  });
+  return byTheatre;
+}
+
+/* =========================================================
+   LOBBY DISPLAY
+   ========================================================= */
+function renderLobby() {
+  const setupOk = !!CONFIG.APPS_SCRIPT_URL;
+  const visibleCases = state.cases.filter(c => !c.stages.discharged);
+  const now = new Date();
+
+  return `
+    <div class="lobby">
+      <div class="lobby-head">
+        <div>
+          <h1>Operation Theatre Status</h1>
+          <div class="sub">${escapeHtml(CONFIG.HOSPITAL_NAME)} · ${escapeHtml(CONFIG.DEPARTMENT_NAME)}</div>
+        </div>
+        <div class="lobby-clock">
+          <div class="time" id="lobby-time">${now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true})}</div>
+          <div class="date">${now.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'})}</div>
+        </div>
+      </div>
+
+      ${!setupOk
+        ? `<div class="empty-state" style="color:#fff; opacity:0.7;"><div class="big">⚙</div><div>Waiting for setup…</div></div>`
+        : visibleCases.length === 0
+          ? `<div class="lobby-empty">No active cases at the moment</div>`
+          : `<div class="lobby-grid">
+              ${visibleCases.map(renderLobbyTile).join('')}
+            </div>`
+      }
+
+      <div class="lobby-foot">
+        <div>For your privacy, patients are shown by token number only.</div>
+        <div>Updates every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLobbyTile(c) {
+  const stage = currentStage(c);
+  const since = timeSinceStage(c, stage.id);
+  return `
+    <div class="lobby-tile" data-token="${escapeHtml(c.token)}">
+      <div class="token">${escapeHtml(c.token || '—')}</div>
+      <div class="surgeon">${escapeHtml(c.surgeon ? 'Surgeon: ' + c.surgeon : 'Surgical team')}</div>
+      <div class="status-row">
+        <div class="stage-dot" style="background:var(--${stage.color}); color:var(--${stage.color});"></div>
+        <div class="stage-text">${escapeHtml(stage.lobby)}</div>
+      </div>
+      <div class="since">${since != null ? `${fmtDuration(since)} in this stage` : ''}</div>
+    </div>
+  `;
+}
+
+function attachLobbyHandlers() {
+  // Update clock every minute
+  if (lobbyClockTimer) clearInterval(lobbyClockTimer);
+  lobbyClockTimer = setInterval(() => {
+    const t = $('#lobby-time');
+    if (t) t.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true});
+  }, 30000);
+}
+let lobbyClockTimer = null;
+
+/* =========================================================
+   SHARED UI
+   ========================================================= */
+function renderTopbar(viewLabel) {
+  const onlineClass = state.online ? '' : 'offline';
+  return `
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand">
+          <div class="brand-mark">K</div>
+          <div class="brand-text">
+            <div class="title">KIMS OT Tracker</div>
+            <div class="sub">${escapeHtml(viewLabel)}</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span class="connection-pill ${onlineClass}">${state.online ? 'Live' : 'Offline'}</span>
+        <button class="btn sm" id="refresh-btn" title="Refresh">↻</button>
+        <button class="btn sm ghost" id="switch-view-btn">Switch view</button>
+      </div>
+    </header>
+  `;
+}
+
+function attachTopbarHandlers() {
+  $('#refresh-btn')?.addEventListener('click', async () => {
+    await fetchCases();
+    render();
+    toast('Refreshed', 'success');
+  });
+  $('#switch-view-btn')?.addEventListener('click', () => {
+    state.view = null;
+    state.pinUnlocked = false;
+    setUrlView(null);
+    stopAutoRefresh();
+    render();
+  });
+}
+
+function renderSetupNotice() {
+  return `
+    <div class="setup-notice">
+      <span>⚙️</span>
+      <div>
+        <strong>Setup needed:</strong> Open this file and paste your Apps Script Web App URL into <code>CONFIG.APPS_SCRIPT_URL</code>. Until then, no data will load.
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   AUTO-REFRESH
+   ========================================================= */
+let refreshTimer = null;
+function startAutoRefresh() {
+  stopAutoRefresh();
+  refreshTimer = setInterval(async () => {
+    const prev = JSON.stringify(state.cases.map(c => ({ id: c.id, stage: currentStage(c).id })));
+    await fetchCases();
+    const next = JSON.stringify(state.cases.map(c => ({ id: c.id, stage: currentStage(c).id })));
+    if (prev !== next) {
+      // Re-render and visually highlight changed lobby tiles
+      render();
+      if (state.view === 'lobby') flashUpdated();
+    } else {
+      // Just update the "last updated" text on lobby
+      if (state.view === 'lobby') {
+        const foot = $('.lobby-foot');
+        if (foot) foot.lastElementChild.textContent = `Updates every ${CONFIG.REFRESH_MS/1000}s · Last updated ${fmtTime(state.lastFetch)}`;
+      }
+    }
+  }, CONFIG.REFRESH_MS);
+}
+function stopAutoRefresh() {
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+}
+function flashUpdated() {
+  $$('.lobby-tile').forEach(t => {
+    t.classList.add('updated');
+    setTimeout(() => t.classList.remove('updated'), 2000);
+  });
+}
+
+/* =========================================================
+   STARTUP
+   ========================================================= */
+async function start() {
+  state.view = getViewFromUrl();
+  render();
+  if (state.view && (state.view !== 'staff' || state.pinUnlocked)) {
+    await fetchCases();
+    render();
+    startAutoRefresh();
+  }
+}
+start();
+</script>
+</body>
+</html>
