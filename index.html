@@ -506,12 +506,27 @@ table.data tbody tr:hover { background: var(--surface-2); }
   border-color: rgba(255,255,255,0.3);
   transform: scale(1.01);
 }
+.lobby-tile .token-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
 .lobby-tile .token {
   font-family: 'Fraunces', serif;
   font-weight: 700;
   font-size: 36px;
   letter-spacing: -0.02em;
   line-height: 1;
+}
+.lobby-tile .ot-tag {
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.15);
+  padding: 6px 12px;
+  border-radius: 99px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 .lobby-tile .surgeon {
   font-size: 13px;
@@ -534,11 +549,20 @@ table.data tbody tr:hover { background: var(--surface-2); }
   font-size: 18px;
   font-weight: 500;
 }
-.lobby-tile .since {
+.lobby-tile .lobby-meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
   font-size: 12px;
-  opacity: 0.5;
-  margin-top: 8px;
+  opacity: 0.7;
   font-variant-numeric: tabular-nums;
+}
+.lobby-tile .duration-pill {
+  background: rgba(255,255,255,0.1);
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-weight: 500;
 }
 .lobby-empty {
   grid-column: 1 / -1;
@@ -558,6 +582,153 @@ table.data tbody tr:hover { background: var(--surface-2); }
   font-size: 12px;
   opacity: 0.5;
 }
+
+/* ============ OT RECEPTION BOARD ============ */
+.board {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a1424 0%, #1a2942 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.board-head h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+.board-head .sub { font-size: 12px; opacity: 0.6; margin-top: 2px; letter-spacing: 0.05em; }
+.board-clock {
+  text-align: right;
+  font-family: 'Fraunces', serif;
+}
+.board-clock .time { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.board-clock .date { font-size: 12px; opacity: 0.6; }
+
+.board-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 1100px) {
+  .board-grid { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(5, auto); }
+}
+@media (max-width: 700px) {
+  .board-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; }
+}
+
+.board-tile-v2 {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 140px;
+  border-left: 4px solid rgba(255,255,255,0.2);
+  transition: all 0.4s ease;
+}
+.board-tile-v2.empty { background: rgba(255,255,255,0.02); border-left-color: rgba(255,255,255,0.08); }
+.board-tile-v2.completed { opacity: 0.45; }
+.board-tile-v2.warn { border-left-color: #f59e0b; }
+.board-tile-v2.danger { border-left-color: #ef4444; box-shadow: 0 0 0 1px rgba(239,68,68,0.4); }
+
+.board-tile-v2 .room-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.board-tile-v2 .room {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.board-tile-v2 .token-mini {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 13px;
+  opacity: 0.7;
+  letter-spacing: 0.02em;
+}
+.board-tile-v2 .patient-name {
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.board-tile-v2 .procedure {
+  font-size: 12px;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.board-tile-v2 .surgeon-line {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 1px;
+}
+.board-tile-v2 .stage-row {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.board-tile-v2 .stage-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.board-tile-v2 .elapsed-mini {
+  font-size: 11px;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+.board-tile-v2 .empty-text {
+  margin: auto;
+  font-style: italic;
+  opacity: 0.4;
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+}
+
+.board-foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  opacity: 0.5;
+}
+.board-legend {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.board-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.board-legend .swatch { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
 /* ============ MODAL ============ */
 .modal-backdrop {
@@ -781,9 +952,9 @@ const CONFIG = {
   // on the Apps Script side as a second layer.
   STAFF_PIN: '4321',
 
-  // Pilot configuration: start with 2 theatres. Add more later as
-  // simply as: ['OT-1', 'OT-2', 'OT-3', 'OT-4', 'OT-5', 'OT-6', 'OT-7']
-  THEATRES: ['OT-1', 'OT-2'],
+  // 15 theatres total: 13 general OTs + 2 OBG theatres.
+  THEATRES: ['OT 1', 'OT 2', 'OT 3', 'OT 4', 'OT 5', 'OT 6', 'OT 7', 'OT 8',
+             'OT 9', 'OT 10', 'OT 11', 'OT 12', 'OT 13', 'OBG 1', 'OBG 2'],
 
   // How often the lobby/admin views auto-refresh (milliseconds)
   REFRESH_MS: 15000,
@@ -795,14 +966,17 @@ const CONFIG = {
 /* ---------- STAGES ---------- */
 // Stage order matters - it defines the patient's forward flow.
 const STAGES = [
-  { id: 'registered',   label: 'Registered',           lobby: 'Awaiting pre-op',         color: 'stage-registered' },
-  { id: 'preop',        label: 'In Pre-Op',            lobby: 'In Pre-Operation',        color: 'stage-preop' },
-  { id: 'in_ot',        label: 'In OT',                lobby: 'Moved to Operation Theatre', color: 'stage-in-ot' },
-  { id: 'anaesthesia',  label: 'Anaesthesia Started',  lobby: 'Preparation underway',    color: 'stage-anaesthesia' },
-  { id: 'surgery',      label: 'Surgery Started',      lobby: 'Surgery in progress',     color: 'stage-surgery' },
-  { id: 'completed',    label: 'Surgery Completed',    lobby: 'Surgery complete',        color: 'stage-completed' },
-  { id: 'pacu',         label: 'In PACU',              lobby: 'In Recovery (PACU)',      color: 'stage-pacu' },
-  { id: 'discharged',   label: 'Shifted to Ward',      lobby: 'Moved to Ward',           color: 'stage-discharged' },
+  { id: 'registered',           label: 'Registered',                     lobby: 'Awaiting pre-op',          color: 'stage-registered' },
+  { id: 'preop',                label: 'In Pre-Op',                      lobby: 'In Pre-Operation',         color: 'stage-preop' },
+  { id: 'in_ot',                label: 'In OT',                          lobby: 'Moved to Operation Theatre', color: 'stage-in-ot' },
+  { id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Preparation underway',     color: 'stage-anaesthesia' },
+  { id: 'anaesthesia_complete', label: 'Anaesthesia Complete',           lobby: 'Preparation underway',     color: 'stage-anaesthesia' },
+  { id: 'prep_positioning',     label: 'Surgical Prep & Positioning',    lobby: 'Preparation underway',     color: 'stage-anaesthesia' },
+  { id: 'surgery',              label: 'Surgery Started',                lobby: 'Surgery in progress',      color: 'stage-surgery' },
+  { id: 'completed',            label: 'Surgery Completed',              lobby: 'Surgery complete',         color: 'stage-completed' },
+  { id: 'emergence',            label: 'Emergence & Recovery',           lobby: 'Recovery preparation',     color: 'stage-completed' },
+  { id: 'pacu',                 label: 'In PACU',                        lobby: 'In Recovery (PACU)',       color: 'stage-pacu' },
+  { id: 'discharged',           label: 'Shifted to Ward',                lobby: 'Moved to Ward',            color: 'stage-discharged' },
 ];
 const STAGE_BY_ID = Object.fromEntries(STAGES.map(s => [s.id, s]));
 const STAGE_INDEX = Object.fromEntries(STAGES.map((s, i) => [s.id, i]));
@@ -832,7 +1006,7 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 function getViewFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const v = (params.get('view') || '').toLowerCase();
-  return ['staff', 'admin', 'lobby'].includes(v) ? v : null;
+  return ['staff', 'admin', 'lobby', 'board'].includes(v) ? v : null;
 }
 
 function setUrlView(v) {
@@ -997,6 +1171,7 @@ function render() {
   if (state.view === 'staff') { root.innerHTML = renderStaff(); attachStaffHandlers(); return; }
   if (state.view === 'admin') { root.innerHTML = renderAdmin(); attachAdminHandlers(); return; }
   if (state.view === 'lobby') { root.innerHTML = renderLobby(); attachLobbyHandlers(); return; }
+  if (state.view === 'board') { root.innerHTML = renderBoard(); attachBoardHandlers(); return; }
 }
 
 /* =========================================================
@@ -1028,6 +1203,13 @@ function renderRoleSelect() {
             <div class="body">
               <div class="title">Patient Lobby Display</div>
               <div class="desc">Family waiting screen · Auto-refresh, no controls</div>
+            </div>
+          </button>
+          <button class="role-option" data-role="board">
+            <div class="icon">📺</div>
+            <div class="body">
+              <div class="title">OT Reception Board</div>
+              <div class="desc">Staff-facing operational board · All 16 theatres at a glance</div>
             </div>
           </button>
         </div>
@@ -1286,6 +1468,19 @@ function openCaseModal(existing = null) {
         <div class="field">
           <label>Procedure</label>
           <input name="procedure" value="${escapeHtml(c.procedure || '')}" placeholder="e.g. Lap. cholecystectomy">
+        </div>
+        <div class="field">
+          <label>Expected Duration of Surgery</label>
+          <select name="expected_duration_min">
+            <option value="">— select —</option>
+            <option value="30"  ${String(c.expected_duration_min) === '30'  ? 'selected' : ''}>~30 minutes</option>
+            <option value="60"  ${String(c.expected_duration_min) === '60'  ? 'selected' : ''}>~1 hour</option>
+            <option value="90"  ${String(c.expected_duration_min) === '90'  ? 'selected' : ''}>~1.5 hours</option>
+            <option value="120" ${String(c.expected_duration_min) === '120' ? 'selected' : ''}>~2 hours</option>
+            <option value="180" ${String(c.expected_duration_min) === '180' ? 'selected' : ''}>~3 hours</option>
+            <option value="240" ${String(c.expected_duration_min) === '240' ? 'selected' : ''}>~4 hours</option>
+            <option value="360" ${String(c.expected_duration_min) === '360' ? 'selected' : ''}>~6 hours or more</option>
+          </select>
         </div>
         ${isEdit ? `
         <div class="field">
@@ -1796,17 +1991,34 @@ function renderLobby() {
 function renderLobbyTile(c) {
   const stage = currentStage(c);
   const since = timeSinceStage(c, stage.id);
+  const dur = c.expected_duration_min;
+  const durLabel = dur ? formatExpectedDuration(dur) : '';
   return `
     <div class="lobby-tile" data-token="${escapeHtml(c.token)}">
-      <div class="token">${escapeHtml(c.token || '—')}</div>
+      <div class="token-row">
+        <div class="token">${escapeHtml(c.token || '—')}</div>
+        <div class="ot-tag">${escapeHtml(c.theatre || '')}</div>
+      </div>
       <div class="surgeon">${escapeHtml(c.surgeon ? 'Surgeon: ' + c.surgeon : 'Surgical team')}</div>
       <div class="status-row">
         <div class="stage-dot" style="background:var(--${stage.color}); color:var(--${stage.color});"></div>
         <div class="stage-text">${escapeHtml(stage.lobby)}</div>
       </div>
-      <div class="since">${since != null ? `${fmtDuration(since)} in this stage` : ''}</div>
+      <div class="lobby-meta">
+        ${since != null ? `<span>${fmtDuration(since)} in this stage</span>` : ''}
+        ${durLabel ? `<span class="duration-pill">Expected: ${escapeHtml(durLabel)}</span>` : ''}
+      </div>
     </div>
   `;
+}
+
+function formatExpectedDuration(min) {
+  const m = parseInt(min, 10);
+  if (isNaN(m) || m <= 0) return '';
+  if (m < 60) return `~${m} minutes`;
+  if (m === 60) return '~1 hour';
+  if (m % 60 === 0) return `~${m / 60} hours`;
+  return `~${(m / 60).toFixed(1)} hours`;
 }
 
 function attachLobbyHandlers() {
@@ -1818,6 +2030,114 @@ function attachLobbyHandlers() {
   }, 30000);
 }
 let lobbyClockTimer = null;
+
+/* =========================================================
+   OT RECEPTION BOARD
+   Staff-facing operational board. All 16 OTs at a glance.
+   ========================================================= */
+function renderBoard() {
+  const setupOk = !!CONFIG.APPS_SCRIPT_URL;
+  const now = new Date();
+
+  // Map cases by theatre - one tile per OT, sorted by OT number.
+  // For each OT: pick the most relevant case (active first, else most recent completed).
+  const tilesByOT = {};
+  CONFIG.THEATRES.forEach(t => tilesByOT[t] = []);
+  state.cases.forEach(c => {
+    if (tilesByOT[c.theatre]) tilesByOT[c.theatre].push(c);
+  });
+  // Sort each OT's cases: active (not finished) first, then by created descending
+  Object.values(tilesByOT).forEach(arr => {
+    arr.sort((a, b) => {
+      const aFin = isFinished(a) ? 1 : 0;
+      const bFin = isFinished(b) ? 1 : 0;
+      if (aFin !== bFin) return aFin - bFin;
+      return new Date(b.created) - new Date(a.created);
+    });
+  });
+
+  return `
+    <div class="board">
+      <div class="board-head">
+        <div>
+          <h1>OT Reception Board</h1>
+          <div class="sub">${escapeHtml(CONFIG.HOSPITAL_NAME)} · ${escapeHtml(CONFIG.DEPARTMENT_NAME)} · Staff View</div>
+        </div>
+        <div class="board-clock">
+          <div class="time" id="board-time">${now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true})}</div>
+          <div class="date">${now.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'})}</div>
+        </div>
+      </div>
+
+      ${!setupOk
+        ? `<div class="empty-state" style="color:#fff; opacity:0.7;"><div class="big">⚙</div><div>Waiting for setup…</div></div>`
+        : `<div class="board-grid">
+            ${CONFIG.THEATRES.map(t => renderBoardOTTile(t, tilesByOT[t] || [])).join('')}
+          </div>`
+      }
+
+      <div class="board-foot">
+        <div class="board-legend">
+          <span><span class="swatch" style="background:#fff; opacity:0.4;"></span>Available</span>
+          <span><span class="swatch" style="background:#3b82f6;"></span>Active case</span>
+          <span><span class="swatch" style="background:#f59e0b;"></span>Running long</span>
+          <span><span class="swatch" style="background:#ef4444;"></span>Significantly delayed</span>
+        </div>
+        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderBoardOTTile(theatre, cases) {
+  if (cases.length === 0) {
+    return `<div class="board-tile-v2 empty">
+      <div class="room-row"><div class="room">${escapeHtml(theatre)}</div></div>
+      <div class="empty-text">Available</div>
+    </div>`;
+  }
+
+  // Use the first case (active or most recent completed)
+  const c = cases[0];
+  const stage = currentStage(c);
+  const since = timeSinceStage(c, stage.id);
+  const finished = isFinished(c);
+
+  // Urgency flags - based on time spent in current stage
+  let urgencyClass = '';
+  if (!finished) {
+    if (stage.id === 'preop' && since > 60 * 60 * 1000) urgencyClass = 'warn';
+    if (stage.id === 'in_ot' && since > 30 * 60 * 1000) urgencyClass = 'warn';
+    if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) urgencyClass = 'danger';
+    if (stage.id === 'preop' && since > 2 * 60 * 60 * 1000) urgencyClass = 'danger';
+  }
+
+  const completedClass = finished ? 'completed' : '';
+
+  return `<div class="board-tile-v2 ${completedClass} ${urgencyClass}">
+    <div class="room-row">
+      <div class="room">${escapeHtml(theatre)}</div>
+      <div class="token-mini">${escapeHtml(c.token || '')}</div>
+    </div>
+    <div class="patient-name">${escapeHtml(c.patientName || '—')}</div>
+    <div class="procedure">${escapeHtml(c.procedure || c.specialty || '—')}</div>
+    <div class="surgeon-line">${escapeHtml(c.surgeon || '')}</div>
+    <div class="stage-row">
+      <span class="stage-pill" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span>
+      <span class="elapsed-mini">${since != null ? fmtDuration(since) : ''}</span>
+    </div>
+  </div>`;
+}
+
+let boardClockTimer = null;
+function attachBoardHandlers() {
+  if (boardClockTimer) clearInterval(boardClockTimer);
+  boardClockTimer = setInterval(() => {
+    const t = $('#board-time');
+    if (t) t.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true});
+  }, 30000);
+}
+
 
 /* =========================================================
    SHARED UI
@@ -1885,10 +2205,14 @@ function startAutoRefresh() {
       render();
       if (state.view === 'lobby') flashUpdated();
     } else {
-      // Just update the "last updated" text on lobby
+      // Just update the "last updated" text on lobby/board
       if (state.view === 'lobby') {
         const foot = $('.lobby-foot');
         if (foot) foot.lastElementChild.textContent = `Updates every ${CONFIG.REFRESH_MS/1000}s · Last updated ${fmtTime(state.lastFetch)}`;
+      }
+      if (state.view === 'board') {
+        const foot = $('.board-foot');
+        if (foot) foot.lastElementChild.textContent = `Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${fmtTime(state.lastFetch)}`;
       }
     }
   }, CONFIG.REFRESH_MS);
