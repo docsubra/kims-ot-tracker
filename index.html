@@ -701,6 +701,22 @@ table.data tbody tr:hover { background: var(--surface-2); }
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
+.board-table .col-ot-cont {
+  opacity: 0.4;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+.board-table tbody tr.ot-row-first {
+  border-top: 2px solid rgba(255,255,255,0.10);
+}
+.board-table tbody tr.ot-row-first:first-child {
+  border-top: none;
+}
+.board-table tbody tr.ot-row-cont td {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
 .board-table .available-cell {
   font-style: italic;
   opacity: 0.55;
@@ -803,6 +819,77 @@ table.data tbody tr:hover { background: var(--surface-2); }
 }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+
+.radio-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+}
+.radio-option:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+.radio-option input[type="radio"] { accent-color: var(--primary); }
+
+.reschedule-history {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.reschedule-history h4 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.reschedule-history-item {
+  padding: 5px 0;
+  border-top: 1px dashed var(--border);
+  color: var(--ink-2);
+}
+.reschedule-history-item:first-of-type { border-top: none; }
+.reschedule-history-item .from-to { font-weight: 600; color: var(--ink); }
+.reschedule-history-item .reason { font-style: italic; color: var(--ink-2); }
+.reschedule-history-item .time { font-size: 11px; opacity: 0.7; }
+
+.case-type-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-left: 4px;
+  background: #fee2e2;
+  color: #dc2626;
+}
+.scheduled-time-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
+}
 
 /* Timeline editor inside edit modal */
 .timeline-editor {
@@ -1327,9 +1414,10 @@ function renderCaseItem(c) {
     <div class="case-item" data-case="${c.id}">
       <div class="case-header">
         <div>
-          <div class="case-token">${escapeHtml(c.token || '')}</div>
+          <div class="case-token">${escapeHtml(c.token || '')}${c.case_type === 'emergency' ? '<span class="case-type-badge">EMERG</span>' : ''}</div>
           <div class="case-name">${escapeHtml(c.patientName || '—')}</div>
           <div class="case-meta">
+            ${c.scheduled_time ? `<span class="scheduled-time-pill">⏱ ${escapeHtml(c.scheduled_time)}</span>` : ''}
             ${escapeHtml(c.surgeon || 'Surgeon —')} · ${escapeHtml(c.procedure || c.specialty || '—')}<br>
             <span class="elapsed ${elapsedClass}">${escapeHtml(stage.label)} · ${elapsed}</span>
           </div>
@@ -1429,6 +1517,23 @@ function openCaseModal(existing = null) {
           </div>
         </div>
         <div class="field">
+          <label>Case Type</label>
+          <div class="radio-row">
+            <label class="radio-option">
+              <input type="radio" name="case_type" value="elective" ${(c.case_type || 'elective') === 'elective' ? 'checked' : ''} data-case-type-radio>
+              <span>Elective (scheduled)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="case_type" value="emergency" ${c.case_type === 'emergency' ? 'checked' : ''} data-case-type-radio>
+              <span>Emergency (EMERG)</span>
+            </label>
+          </div>
+        </div>
+        <div class="field" id="scheduled-time-field" style="${c.case_type === 'emergency' ? 'display:none;' : ''}">
+          <label>Scheduled Time <span style="font-weight:400; opacity:0.6;">(24-hour format, e.g. 09:30, 14:15)</span></label>
+          <input name="scheduled_time" type="time" value="${escapeHtml(c.scheduled_time || '')}" placeholder="HH:MM">
+        </div>
+        <div class="field">
           <label>Patient Name</label>
           <input name="patientName" required value="${escapeHtml(c.patientName || '')}" placeholder="e.g. Mr. Sharma R.">
         </div>
@@ -1520,6 +1625,45 @@ function openCaseModal(existing = null) {
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   $$('[data-close]', modal).forEach(b => b.addEventListener('click', close));
 
+  // Case type radio toggle: show/hide scheduled time field
+  const stField = $('#scheduled-time-field', modal);
+  $$('[data-case-type-radio]', modal).forEach(r => {
+    r.addEventListener('change', () => {
+      if (r.value === 'emergency') {
+        stField.style.display = 'none';
+        const stInput = $('input[name="scheduled_time"]', stField);
+        if (stInput) stInput.value = '';
+      } else {
+        stField.style.display = '';
+      }
+    });
+  });
+
+  // Render reschedule history if there is any (edit mode only)
+  if (isEdit && c.reschedule_history) {
+    let history = [];
+    try { history = JSON.parse(c.reschedule_history); } catch (e) { history = []; }
+    if (Array.isArray(history) && history.length > 0) {
+      const histBlock = document.createElement('div');
+      histBlock.className = 'reschedule-history';
+      histBlock.innerHTML = `
+        <h4>Reschedule history (${history.length})</h4>
+        ${history.map(h => {
+          const at = h.at ? new Date(h.at) : null;
+          const atStr = at && !isNaN(at.getTime()) ? at.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : '';
+          return `
+            <div class="reschedule-history-item">
+              <div><span class="from-to">${escapeHtml(h.fromTime || '—')} → ${escapeHtml(h.toTime || '—')}</span></div>
+              <div class="reason">${escapeHtml(h.reason || '(no reason)')}</div>
+              <div class="time">${escapeHtml(atStr)}</div>
+            </div>
+          `;
+        }).join('')}
+      `;
+      stField.parentNode.insertBefore(histBlock, stField.nextSibling);
+    }
+  }
+
   // Timeline editor handlers (only in edit mode)
   if (isEdit) {
     $$('[data-tl-action]', modal).forEach(btn => {
@@ -1583,12 +1727,52 @@ function openCaseModal(existing = null) {
     if (!payload.token || !payload.patientName || !payload.theatre) {
       toast('Token, patient name and theatre required', 'error'); return;
     }
+
+    // Default case_type to elective if not specified (radio not in group)
+    if (!payload.case_type) payload.case_type = 'elective';
+
+    // Validation: elective cases must have a scheduled time
+    if (payload.case_type === 'elective' && !payload.scheduled_time) {
+      toast('Elective cases need a scheduled time. Use Emergency for unscheduled cases.', 'error');
+      return;
+    }
+    // Emergency cases ignore scheduled_time
+    if (payload.case_type === 'emergency') {
+      payload.scheduled_time = '';
+    }
+
     const saveBtn = $('#case-save', modal);
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
     try {
       if (isEdit) {
-        await api('update', { caseId: c.id, ...payload });
+        // Detect if scheduled_time changed -> trigger reschedule flow
+        const oldTime = c.scheduled_time || '';
+        const newTime = payload.scheduled_time || '';
+        const timeChanged = oldTime !== newTime;
+
+        if (timeChanged) {
+          // Ask for reschedule reason
+          const reason = await promptRescheduleReason(oldTime, newTime);
+          if (reason === null) {
+            // User cancelled the reason prompt - abort save entirely
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save changes';
+            return;
+          }
+          // Update non-time fields first
+          const otherFields = { ...payload };
+          delete otherFields.scheduled_time;
+          await api('update', { caseId: c.id, ...otherFields });
+          // Then call reschedule with the time + reason
+          await api('reschedule', {
+            caseId: c.id,
+            scheduled_time: newTime,
+            reason: reason
+          });
+        } else {
+          await api('update', { caseId: c.id, ...payload });
+        }
       } else {
         await createCase(payload);
       }
@@ -1601,6 +1785,92 @@ function openCaseModal(existing = null) {
       saveBtn.disabled = false;
       saveBtn.textContent = isEdit ? 'Save changes' : 'Add case';
     }
+  });
+}
+
+/**
+ * Prompts the user for a reschedule reason via a custom modal.
+ * Returns the reason string, or null if user cancels.
+ */
+function promptRescheduleReason(oldTime, newTime) {
+  return new Promise(resolve => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    const REASONS = [
+      'Patient not fit for surgery',
+      'Surgeon delay',
+      'OT not ready / equipment issue',
+      'Previous case overran',
+      'Anaesthetist unavailable',
+      'Patient consent issue',
+      'Investigations pending',
+      'Emergency case took priority',
+      'Other'
+    ];
+    modal.innerHTML = `
+      <div class="modal" style="max-width:480px;">
+        <div class="modal-head">
+          <h2>Reschedule Reason</h2>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:13px; color:var(--ink-2); margin-bottom:14px;">
+            Time changed: <strong>${escapeHtml(oldTime || '(unscheduled)')}</strong> → <strong>${escapeHtml(newTime || '(unscheduled)')}</strong>
+          </p>
+          <div class="field">
+            <label>Reason</label>
+            <select id="reschedule-reason-select">
+              <option value="">— select —</option>
+              ${REASONS.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field" id="reschedule-other-field" style="display:none;">
+            <label>Specify</label>
+            <input type="text" id="reschedule-other-input" placeholder="Briefly describe the reason">
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn" id="reschedule-cancel">Cancel</button>
+          <button class="btn primary" id="reschedule-confirm">Confirm reschedule</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const sel = $('#reschedule-reason-select', modal);
+    const otherField = $('#reschedule-other-field', modal);
+    const otherInput = $('#reschedule-other-input', modal);
+
+    sel.addEventListener('change', () => {
+      if (sel.value === 'Other') {
+        otherField.style.display = '';
+        otherInput.focus();
+      } else {
+        otherField.style.display = 'none';
+      }
+    });
+
+    const cleanup = () => modal.remove();
+
+    $('#reschedule-cancel', modal).addEventListener('click', () => {
+      cleanup();
+      resolve(null);
+    });
+
+    $('#reschedule-confirm', modal).addEventListener('click', () => {
+      const r = sel.value;
+      if (!r) {
+        toast('Please select a reason', 'error');
+        return;
+      }
+      let finalReason = r;
+      if (r === 'Other') {
+        const txt = otherInput.value.trim();
+        if (!txt) { toast('Please describe the reason', 'error'); return; }
+        finalReason = txt;
+      }
+      cleanup();
+      resolve(finalReason);
+    });
   });
 }
 
@@ -1807,6 +2077,8 @@ function renderAdmin() {
             <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn" id="export-csv">⬇ Export CSV</button>
               <button class="btn" id="print-report">🖨 Print report</button>
+              <button class="btn primary" id="download-list-pdf">📄 Daily List (PDF)</button>
+              <button class="btn primary" id="download-list-doc">📝 Daily List (Word)</button>
             </div>
           </div>
         </div>
@@ -1845,6 +2117,8 @@ function attachAdminHandlers() {
 
   $('#export-csv')?.addEventListener('click', exportCsv);
   $('#print-report')?.addEventListener('click', () => window.print());
+  $('#download-list-pdf')?.addEventListener('click', () => downloadDailyList('pdf'));
+  $('#download-list-doc')?.addEventListener('click', () => downloadDailyList('doc'));
 }
 
 function drawTheatreChart() {
@@ -1917,6 +2191,155 @@ function exportCsv() {
   a.href = URL.createObjectURL(blob);
   a.download = `KIMS-OT-${todayISO()}.csv`;
   a.click();
+}
+
+/**
+ * Generate the day's case list as a PDF or Word doc.
+ * Approach: build a styled HTML document with a print stylesheet
+ * and either trigger the browser's print-to-PDF dialog (PDF mode)
+ * or save it as an .doc file (Word mode — Word reads HTML cleanly).
+ */
+function downloadDailyList(format) {
+  const cases = state.cases.slice();
+  if (cases.length === 0) {
+    toast('No cases today to print', 'error');
+    return;
+  }
+
+  // Sort: elective by scheduled time first, emergencies at the bottom (by created time)
+  cases.sort((a, b) => {
+    const aEmerg = a.case_type === 'emergency' ? 1 : 0;
+    const bEmerg = b.case_type === 'emergency' ? 1 : 0;
+    if (aEmerg !== bEmerg) return aEmerg - bEmerg;
+    if (aEmerg === 0) {
+      // Both elective: compare by theatre, then scheduled_time
+      const tCmp = String(a.theatre).localeCompare(String(b.theatre), undefined, { numeric: true });
+      if (tCmp !== 0) return tCmp;
+      return String(a.scheduled_time || '99:99').localeCompare(String(b.scheduled_time || '99:99'));
+    }
+    // Both emergency: by created time
+    return new Date(a.created) - new Date(b.created);
+  });
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const generatedStr = today.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, day: '2-digit', month: 'short' });
+
+  const electives = cases.filter(c => c.case_type !== 'emergency');
+  const emergencies = cases.filter(c => c.case_type === 'emergency');
+
+  const rowsHtml = (list) => list.map((c, i) => {
+    const stage = currentStage(c);
+    const dur = c.expected_duration_min ? `~${c.expected_duration_min} min` : '—';
+    return `
+      <tr>
+        <td style="text-align:center;">${i + 1}</td>
+        <td style="font-weight:bold;">${escapeHtml(c.scheduled_time || (c.case_type === 'emergency' ? 'EMERG' : '—'))}</td>
+        <td style="font-weight:bold;">${escapeHtml(c.theatre || '')}</td>
+        <td>${escapeHtml(c.token || '')}</td>
+        <td>${escapeHtml(c.patientName || '')}${c.age ? ' (' + escapeHtml(String(c.age)) + (c.sex ? '/' + escapeHtml(c.sex) : '') + ')' : ''}</td>
+        <td>${escapeHtml(c.procedure || c.specialty || '')}</td>
+        <td>${escapeHtml(c.surgeon || '')}</td>
+        <td>${escapeHtml(c.anaesthetist || '')}</td>
+        <td>${dur}</td>
+        <td>${escapeHtml(stage.label)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const docHtml = `<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<title>KIMS OT Daily List — ${dateStr}</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  body { font-family: Calibri, Arial, sans-serif; color: #14181f; font-size: 11pt; margin: 0; padding: 16px; }
+  .head { border-bottom: 2px solid #1a4d8c; padding-bottom: 10px; margin-bottom: 14px; }
+  .head h1 { color: #1a4d8c; font-size: 22pt; margin: 0 0 4px 0; }
+  .head .sub { color: #4b5563; font-size: 10pt; }
+  .head .date-line { font-size: 13pt; font-weight: bold; margin-top: 4px; }
+  h2 { color: #1a4d8c; font-size: 13pt; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #d97706; }
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  th { background: #1a4d8c; color: white; text-align: left; padding: 6px 8px; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 5px 8px; border-bottom: 1px solid #e3e6eb; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #e3e6eb; font-size: 9pt; color: #4b5563; display: flex; justify-content: space-between; }
+  .summary { margin-top: 10px; font-size: 10pt; color: #4b5563; }
+</style>
+</head><body>
+  <div class="head">
+    <h1>OT Daily Case List</h1>
+    <div class="sub">Department of Anaesthesia · KIMS Hospital, Mahadevapura</div>
+    <div class="date-line">${escapeHtml(dateStr)}</div>
+  </div>
+
+  <div class="summary">
+    Total cases: <strong>${cases.length}</strong> · Elective: <strong>${electives.length}</strong> · Emergency: <strong>${emergencies.length}</strong>
+  </div>
+
+  ${electives.length > 0 ? `
+    <h2>Elective Cases</h2>
+    <table>
+      <thead><tr>
+        <th style="width:32px;">#</th>
+        <th style="width:60px;">Time</th>
+        <th style="width:60px;">OT</th>
+        <th style="width:70px;">Token</th>
+        <th>Patient</th>
+        <th>Procedure</th>
+        <th>Surgeon</th>
+        <th>Anaesthetist</th>
+        <th style="width:70px;">Dur.</th>
+        <th style="width:120px;">Status</th>
+      </tr></thead>
+      <tbody>${rowsHtml(electives)}</tbody>
+    </table>
+  ` : ''}
+
+  ${emergencies.length > 0 ? `
+    <h2>Emergency Cases</h2>
+    <table>
+      <thead><tr>
+        <th style="width:32px;">#</th>
+        <th style="width:60px;">Time</th>
+        <th style="width:60px;">OT</th>
+        <th style="width:70px;">Token</th>
+        <th>Patient</th>
+        <th>Procedure</th>
+        <th>Surgeon</th>
+        <th>Anaesthetist</th>
+        <th style="width:70px;">Dur.</th>
+        <th style="width:120px;">Status</th>
+      </tr></thead>
+      <tbody>${rowsHtml(emergencies)}</tbody>
+    </table>
+  ` : ''}
+
+  <div class="footer">
+    <span>Generated ${escapeHtml(generatedStr)}</span>
+    <span>KIMS OT Tracker</span>
+  </div>
+</body></html>`;
+
+  if (format === 'pdf') {
+    // Open in a new window and trigger the browser's print dialog -> Save as PDF
+    const w = window.open('', '_blank');
+    if (!w) { toast('Pop-up blocked. Please allow pop-ups for this site.', 'error'); return; }
+    w.document.write(docHtml);
+    w.document.close();
+    // Give the browser a moment to render, then trigger print
+    setTimeout(() => { w.focus(); w.print(); }, 400);
+  } else if (format === 'doc') {
+    // Save as .doc file (Word reads HTML+CSS cleanly)
+    const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${docHtml.replace(/<!DOCTYPE[^>]+>|<html[^>]*>|<\/html>|<head>[\s\S]*?<\/head>|<body>|<\/body>/g, '')}</body></html>`;
+    const styledWord = docHtml.replace('<title>', '<!--StartFragment--><title>').replace('</body>', '<!--EndFragment--></body>');
+    const blob = new Blob([styledWord], { type: 'application/msword' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `KIMS-OT-Daily-List-${todayISO()}.doc`;
+    a.click();
+  }
 }
 
 function avgDuration(cases, fromStage, toStage) {
@@ -2032,20 +2455,23 @@ let lobbyClockTimer = null;
 
 /* =========================================================
    OT RECEPTION BOARD (Row-Table Layout)
-   Staff-facing operational board. Each OT is one horizontal row.
+   Staff-facing operational board. Shows ALL cases per OT
+   for today (resets at midnight IST automatically because
+   the backend filters by date).
    ========================================================= */
 function renderBoard() {
   const setupOk = !!CONFIG.APPS_SCRIPT_URL;
   const now = new Date();
 
-  // Map cases by theatre — pick the most relevant case per OT
-  // (active first, else most recent completed).
-  const tilesByOT = {};
-  CONFIG.THEATRES.forEach(t => tilesByOT[t] = []);
+  // Group cases by theatre
+  const casesByOT = {};
+  CONFIG.THEATRES.forEach(t => casesByOT[t] = []);
   state.cases.forEach(c => {
-    if (tilesByOT[c.theatre]) tilesByOT[c.theatre].push(c);
+    if (casesByOT[c.theatre]) casesByOT[c.theatre].push(c);
   });
-  Object.values(tilesByOT).forEach(arr => {
+  // Sort within each OT: active cases first, then completed cases
+  // ordered by most recent first (so latest activity is at the top of each group)
+  Object.values(casesByOT).forEach(arr => {
     arr.sort((a, b) => {
       const aFin = isFinished(a) ? 1 : 0;
       const bFin = isFinished(b) ? 1 : 0;
@@ -2054,12 +2480,24 @@ function renderBoard() {
     });
   });
 
+  // Build rows: each OT in order, all its cases in sorted order.
+  // If an OT has no cases at all, show one "Available" row.
+  const rows = [];
+  CONFIG.THEATRES.forEach(t => {
+    const list = casesByOT[t];
+    if (list.length === 0) {
+      rows.push(renderBoardRowEmpty(t));
+    } else {
+      list.forEach((c, idx) => rows.push(renderBoardRowCase(t, c, idx === 0)));
+    }
+  });
+
   return `
     <div class="board">
       <div class="board-head">
         <div>
           <h1>OT Reception Board</h1>
-          <div class="sub">${escapeHtml(CONFIG.HOSPITAL_NAME)} · ${escapeHtml(CONFIG.DEPARTMENT_NAME)} · Staff View</div>
+          <div class="sub">${escapeHtml(CONFIG.HOSPITAL_NAME)} · ${escapeHtml(CONFIG.DEPARTMENT_NAME)} · Staff View · ${state.cases.length} cases today</div>
         </div>
         <div class="board-clock">
           <div class="time" id="board-time">${now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true})}</div>
@@ -2083,7 +2521,7 @@ function renderBoard() {
                 </tr>
               </thead>
               <tbody>
-                ${CONFIG.THEATRES.map(t => renderBoardRow(t, tilesByOT[t] || [])).join('')}
+                ${rows.join('')}
               </tbody>
             </table>
           </div>`
@@ -2096,39 +2534,50 @@ function renderBoard() {
           <span><span class="swatch" style="background:#f59e0b;"></span>Running long</span>
           <span><span class="swatch" style="background:#ef4444;"></span>Significantly delayed</span>
         </div>
-        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'}</div>
+        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Day resets at midnight IST</div>
       </div>
     </div>
   `;
 }
 
-function renderBoardRow(theatre, cases) {
-  if (cases.length === 0) {
-    return `<tr class="empty active-bar">
-      <td class="col-ot">${escapeHtml(theatre)}</td>
-      <td colspan="6" class="available-cell">Available</td>
-    </tr>`;
-  }
+function renderBoardRowEmpty(theatre) {
+  return `<tr class="empty active-bar ot-row-first">
+    <td class="col-ot">${escapeHtml(theatre)}</td>
+    <td colspan="6" class="available-cell">Available</td>
+  </tr>`;
+}
 
-  const c = cases[0];
+function renderBoardRowCase(theatre, c, isFirstForOT) {
   const stage = currentStage(c);
   const since = timeSinceStage(c, stage.id);
   const finished = isFinished(c);
 
-  // Urgency flags - based on time spent in current stage
-  let rowClass = 'active-bar';
+  // Urgency flags (only for active cases)
+  let rowClass = isFirstForOT ? 'ot-row-first' : 'ot-row-cont';
   if (finished) {
-    rowClass = 'completed';
+    rowClass += ' completed';
   } else {
-    if (stage.id === 'preop' && since > 60 * 60 * 1000) rowClass = 'warn';
-    if (stage.id === 'in_ot' && since > 30 * 60 * 1000) rowClass = 'warn';
-    if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) rowClass = 'danger';
-    if (stage.id === 'preop' && since > 2 * 60 * 60 * 1000) rowClass = 'danger';
+    rowClass += ' active-bar';
+    if (stage.id === 'preop' && since > 60 * 60 * 1000) rowClass += ' warn';
+    if (stage.id === 'in_ot' && since > 30 * 60 * 1000) rowClass += ' warn';
+    if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) rowClass += ' danger';
+    if (stage.id === 'preop' && since > 2 * 60 * 60 * 1000) rowClass += ' danger';
   }
 
+  // Show OT name only on the first row for this OT - subsequent rows show
+  // a small continuation marker so the table reads cleanly
+  const otCell = isFirstForOT
+    ? `<td class="col-ot">${escapeHtml(theatre)}</td>`
+    : `<td class="col-ot col-ot-cont">↳</td>`;
+
+  // Token cell: show scheduled time or EMERG above the token
+  const schedLine = c.case_type === 'emergency'
+    ? `<div style="font-size:10px; font-weight:700; color:#fca5a5; letter-spacing:0.05em;">EMERG</div>`
+    : (c.scheduled_time ? `<div style="font-size:11px; opacity:0.7; font-variant-numeric:tabular-nums;">⏱ ${escapeHtml(c.scheduled_time)}</div>` : '');
+
   return `<tr class="${rowClass}">
-    <td class="col-ot">${escapeHtml(theatre)}</td>
-    <td class="col-token">${escapeHtml(c.token || '')}</td>
+    ${otCell}
+    <td class="col-token">${schedLine}${escapeHtml(c.token || '')}</td>
     <td class="col-patient" title="${escapeHtml(c.patientName || '')}">${escapeHtml(c.patientName || '—')}</td>
     <td class="col-procedure" title="${escapeHtml(c.procedure || c.specialty || '')}">${escapeHtml(c.procedure || c.specialty || '—')}</td>
     <td class="col-surgeon" title="${escapeHtml(c.surgeon || '')}">${escapeHtml(c.surgeon || '—')}</td>
