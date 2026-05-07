@@ -1187,7 +1187,15 @@ function normalizeCase(c) {
   STAGES.forEach(s => {
     if (c[`t_${s.id}`]) stages[s.id] = new Date(c[`t_${s.id}`]);
   });
-  return { ...c, stages };
+  // Normalise scheduled_time: if Sheets stored it as a 1899 ISO date,
+  // extract just the HH:MM. New entries from v1.4+ already arrive clean.
+  let st = c.scheduled_time;
+  if (st && typeof st === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(st)) {
+    // Old broken format like 1899-12-30T06:53:50.000Z -> "06:53"
+    const m = st.match(/T(\d{2}):(\d{2})/);
+    if (m) st = `${m[1]}:${m[2]}`;
+  }
+  return { ...c, scheduled_time: st || '', stages };
 }
 
 async function createCase(payload) {
@@ -2088,24 +2096,48 @@ function renderAdmin() {
 }
 
 function renderBoardTile(theatre, cases) {
-  const ongoing = cases.filter(c => c.theatre === theatre && !isFinished(c));
-  const active = ongoing[0];
-  if (!active) {
+  // Show ALL cases for this OT (active + completed), sorted with active first.
+  // This matches the reception board: cases stay visible until end of day.
+  const otCases = cases.filter(c => c.theatre === theatre);
+  if (otCases.length === 0) {
     return `<div class="board-tile empty">
       <div class="room">${escapeHtml(theatre)}</div>
       <div class="occupant">Available</div>
     </div>`;
   }
-  const stage = currentStage(active);
-  const since = timeSinceStage(active, stage.id);
-  return `<div class="board-tile" style="border-left:4px solid var(--${stage.color});">
-    <div class="room">${escapeHtml(theatre)} · ${escapeHtml(active.token)}</div>
-    <div class="occupant">${escapeHtml(active.patientName || '—')}</div>
-    <div class="stage-line">
-      <span class="stage-badge" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span>
-      · ${fmtDuration(since)}
-    </div>
-    ${active.surgeon ? `<div class="stage-line">${escapeHtml(active.surgeon)}${active.procedure ? ' · ' + escapeHtml(active.procedure) : ''}</div>` : ''}
+
+  // Sort: active cases first, then completed (most recent first within each group)
+  otCases.sort((a, b) => {
+    const aFin = isFinished(a) ? 1 : 0;
+    const bFin = isFinished(b) ? 1 : 0;
+    if (aFin !== bFin) return aFin - bFin;
+    return new Date(b.created) - new Date(a.created);
+  });
+
+  const tileHtml = otCases.map((c, idx) => {
+    const stage = currentStage(c);
+    const since = timeSinceStage(c, stage.id);
+    const finished = isFinished(c);
+    const dimStyle = finished ? 'opacity:0.55;' : '';
+    const borderStyle = idx === 0 ? `border-left:4px solid var(--${stage.color});` : '';
+    const sched = c.scheduled_time ? `<span class="scheduled-time-pill" style="margin-right:6px;">⏱ ${escapeHtml(c.scheduled_time)}</span>` : '';
+    const emerg = c.case_type === 'emergency' ? `<span class="case-type-badge">EMERG</span>` : '';
+    return `
+      <div class="board-tile-case" style="${dimStyle} ${idx > 0 ? 'border-top:1px dashed var(--border); margin-top:8px; padding-top:8px;' : ''}">
+        <div style="font-size:13px;">${sched}${escapeHtml(c.token || '')}${emerg}</div>
+        <div class="occupant">${escapeHtml(c.patientName || '—')}</div>
+        <div class="stage-line">
+          <span class="stage-badge" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span>
+          · ${fmtDuration(since)}
+        </div>
+        ${c.surgeon ? `<div class="stage-line">${escapeHtml(c.surgeon)}${c.procedure ? ' · ' + escapeHtml(c.procedure) : ''}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  return `<div class="board-tile" style="${`border-left:4px solid var(--${currentStage(otCases[0]).color});`}">
+    <div class="room">${escapeHtml(theatre)} <span style="font-size:11px; color:var(--ink-3); font-weight:500;">· ${otCases.length} ${otCases.length === 1 ? 'case' : 'cases'}</span></div>
+    ${tileHtml}
   </div>`;
 }
 
