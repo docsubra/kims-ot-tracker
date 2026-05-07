@@ -583,12 +583,12 @@ table.data tbody tr:hover { background: var(--surface-2); }
   opacity: 0.5;
 }
 
-/* ============ OT RECEPTION BOARD ============ */
+/* ============ OT RECEPTION BOARD (Row-Table Layout) ============ */
 .board {
   min-height: 100vh;
   background: linear-gradient(135deg, #0a1424 0%, #1a2942 100%);
   color: white;
-  padding: 20px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
 }
@@ -596,14 +596,14 @@ table.data tbody tr:hover { background: var(--surface-2); }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
   border-bottom: 1px solid rgba(255,255,255,0.12);
 }
 .board-head h1 {
   font-family: 'Fraunces', serif;
   font-weight: 600;
-  font-size: 28px;
+  font-size: 30px;
   letter-spacing: -0.02em;
 }
 .board-head .sub { font-size: 12px; opacity: 0.6; margin-top: 2px; letter-spacing: 0.05em; }
@@ -611,124 +611,124 @@ table.data tbody tr:hover { background: var(--surface-2); }
   text-align: right;
   font-family: 'Fraunces', serif;
 }
-.board-clock .time { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.board-clock .date { font-size: 12px; opacity: 0.6; }
+.board-clock .time { font-size: 32px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.board-clock .date { font-size: 13px; opacity: 0.6; }
 
-.board-grid {
+/* Board table */
+.board-table-wrap {
   flex: 1;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 10px;
-}
-@media (max-width: 1100px) {
-  .board-grid { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(5, auto); }
-}
-@media (max-width: 700px) {
-  .board-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; }
-}
-
-.board-tile-v2 {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  overflow-y: auto;
   border-radius: 10px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 140px;
-  border-left: 4px solid rgba(255,255,255,0.2);
-  transition: all 0.4s ease;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
 }
-.board-tile-v2.empty { background: rgba(255,255,255,0.02); border-left-color: rgba(255,255,255,0.08); }
-.board-tile-v2.completed { opacity: 0.45; }
-.board-tile-v2.warn { border-left-color: #f59e0b; }
-.board-tile-v2.danger { border-left-color: #ef4444; box-shadow: 0 0 0 1px rgba(239,68,68,0.4); }
+.board-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 16px;
+}
+.board-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.board-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.2s ease;
+}
+.board-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.board-table tbody tr.empty { opacity: 0.45; }
+.board-table tbody tr.completed { opacity: 0.4; }
+.board-table tbody tr.warn { background: rgba(245,158,11,0.06); border-left: 4px solid #f59e0b; }
+.board-table tbody tr.danger { background: rgba(239,68,68,0.08); border-left: 4px solid #ef4444; }
+.board-table tbody tr.active-bar { border-left: 4px solid rgba(59,130,246,0.7); }
+.board-table tbody tr.empty.active-bar { border-left-color: rgba(255,255,255,0.1); }
 
-.board-tile-v2 .room-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
+.board-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.board-tile-v2 .room {
+.board-table .col-ot {
   font-family: 'Fraunces', serif;
   font-weight: 700;
   font-size: 18px;
   letter-spacing: -0.01em;
 }
-.board-tile-v2 .token-mini {
+.board-table .col-token {
   font-family: 'Fraunces', serif;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   opacity: 0.7;
   letter-spacing: 0.02em;
 }
-.board-tile-v2 .patient-name {
-  font-size: 15px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.board-table .col-patient { font-weight: 500; }
+.board-table .col-procedure {
+  font-size: 14px;
+  opacity: 0.8;
 }
-.board-tile-v2 .procedure {
-  font-size: 12px;
-  opacity: 0.7;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.board-table .col-surgeon {
+  font-size: 13px;
+  opacity: 0.65;
 }
-.board-tile-v2 .surgeon-line {
-  font-size: 11px;
-  opacity: 0.55;
-  margin-top: 1px;
+.board-table .col-stage {
+  font-size: 13px;
 }
-.board-tile-v2 .stage-row {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-.board-tile-v2 .stage-pill {
+.board-table .stage-pill {
+  display: inline-block;
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 99px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.board-tile-v2 .elapsed-mini {
-  font-size: 11px;
-  opacity: 0.6;
+.board-table .col-elapsed {
+  font-size: 13px;
+  opacity: 0.7;
   font-variant-numeric: tabular-nums;
-  margin-left: auto;
+  text-align: right;
 }
-.board-tile-v2 .empty-text {
-  margin: auto;
+.board-table .available-cell {
   font-style: italic;
-  opacity: 0.4;
-  font-family: 'Fraunces', serif;
-  font-size: 16px;
+  opacity: 0.55;
+  font-size: 13px;
 }
 
 .board-foot {
-  margin-top: 12px;
-  padding-top: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  opacity: 0.5;
+  opacity: 0.55;
 }
 .board-legend {
   display: flex;
-  gap: 14px;
+  gap: 18px;
   align-items: center;
 }
-.board-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.board-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .board-legend .swatch { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+@media (max-width: 900px) {
+  .board-table { font-size: 14px; }
+  .board-table .col-procedure, .board-table .col-surgeon { display: none; }
+  .board-table thead th.col-procedure-h, .board-table thead th.col-surgeon-h { display: none; }
+}
 
 /* ============ MODAL ============ */
 .modal-backdrop {
@@ -946,7 +946,7 @@ table.data tbody tr:hover { background: var(--surface-2); }
 const CONFIG = {
   // Paste your Apps Script Web App URL here after deployment.
   // It will look like: https://script.google.com/macros/s/AKfycb.../exec
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyELIcJJGOoHdJ6MlyEMrmPrWPxPgo-qpY5B95nXLzCtJbb7q7uAup_d4LHGzEO7GPlCQ/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxPel4HZqephvvBZm_9QmKPOAvM-TiYwGnIj7rB6K3wuFFSguxcGPRGcm48e2vdijHjeQ/exec',
 
   // Staff PIN. Change after first deployment. The PIN is also enforced
   // on the Apps Script side as a second layer.
@@ -2032,21 +2032,20 @@ function attachLobbyHandlers() {
 let lobbyClockTimer = null;
 
 /* =========================================================
-   OT RECEPTION BOARD
-   Staff-facing operational board. All 16 OTs at a glance.
+   OT RECEPTION BOARD (Row-Table Layout)
+   Staff-facing operational board. Each OT is one horizontal row.
    ========================================================= */
 function renderBoard() {
   const setupOk = !!CONFIG.APPS_SCRIPT_URL;
   const now = new Date();
 
-  // Map cases by theatre - one tile per OT, sorted by OT number.
-  // For each OT: pick the most relevant case (active first, else most recent completed).
+  // Map cases by theatre — pick the most relevant case per OT
+  // (active first, else most recent completed).
   const tilesByOT = {};
   CONFIG.THEATRES.forEach(t => tilesByOT[t] = []);
   state.cases.forEach(c => {
     if (tilesByOT[c.theatre]) tilesByOT[c.theatre].push(c);
   });
-  // Sort each OT's cases: active (not finished) first, then by created descending
   Object.values(tilesByOT).forEach(arr => {
     arr.sort((a, b) => {
       const aFin = isFinished(a) ? 1 : 0;
@@ -2071,8 +2070,23 @@ function renderBoard() {
 
       ${!setupOk
         ? `<div class="empty-state" style="color:#fff; opacity:0.7;"><div class="big">⚙</div><div>Waiting for setup…</div></div>`
-        : `<div class="board-grid">
-            ${CONFIG.THEATRES.map(t => renderBoardOTTile(t, tilesByOT[t] || [])).join('')}
+        : `<div class="board-table-wrap">
+            <table class="board-table">
+              <thead>
+                <tr>
+                  <th style="width:80px;">OT</th>
+                  <th style="width:90px;">Token</th>
+                  <th style="width:200px;">Patient</th>
+                  <th class="col-procedure-h">Procedure</th>
+                  <th class="col-surgeon-h" style="width:160px;">Surgeon</th>
+                  <th style="width:200px;">Stage</th>
+                  <th style="width:80px; text-align:right;">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${CONFIG.THEATRES.map(t => renderBoardRow(t, tilesByOT[t] || [])).join('')}
+              </tbody>
+            </table>
           </div>`
       }
 
@@ -2089,44 +2103,41 @@ function renderBoard() {
   `;
 }
 
-function renderBoardOTTile(theatre, cases) {
+function renderBoardRow(theatre, cases) {
   if (cases.length === 0) {
-    return `<div class="board-tile-v2 empty">
-      <div class="room-row"><div class="room">${escapeHtml(theatre)}</div></div>
-      <div class="empty-text">Available</div>
-    </div>`;
+    return `<tr class="empty active-bar">
+      <td class="col-ot">${escapeHtml(theatre)}</td>
+      <td colspan="6" class="available-cell">Available</td>
+    </tr>`;
   }
 
-  // Use the first case (active or most recent completed)
   const c = cases[0];
   const stage = currentStage(c);
   const since = timeSinceStage(c, stage.id);
   const finished = isFinished(c);
 
   // Urgency flags - based on time spent in current stage
-  let urgencyClass = '';
-  if (!finished) {
-    if (stage.id === 'preop' && since > 60 * 60 * 1000) urgencyClass = 'warn';
-    if (stage.id === 'in_ot' && since > 30 * 60 * 1000) urgencyClass = 'warn';
-    if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) urgencyClass = 'danger';
-    if (stage.id === 'preop' && since > 2 * 60 * 60 * 1000) urgencyClass = 'danger';
+  let rowClass = 'active-bar';
+  if (finished) {
+    rowClass = 'completed';
+  } else {
+    if (stage.id === 'preop' && since > 60 * 60 * 1000) rowClass = 'warn';
+    if (stage.id === 'in_ot' && since > 30 * 60 * 1000) rowClass = 'warn';
+    if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) rowClass = 'danger';
+    if (stage.id === 'preop' && since > 2 * 60 * 60 * 1000) rowClass = 'danger';
   }
 
-  const completedClass = finished ? 'completed' : '';
-
-  return `<div class="board-tile-v2 ${completedClass} ${urgencyClass}">
-    <div class="room-row">
-      <div class="room">${escapeHtml(theatre)}</div>
-      <div class="token-mini">${escapeHtml(c.token || '')}</div>
-    </div>
-    <div class="patient-name">${escapeHtml(c.patientName || '—')}</div>
-    <div class="procedure">${escapeHtml(c.procedure || c.specialty || '—')}</div>
-    <div class="surgeon-line">${escapeHtml(c.surgeon || '')}</div>
-    <div class="stage-row">
+  return `<tr class="${rowClass}">
+    <td class="col-ot">${escapeHtml(theatre)}</td>
+    <td class="col-token">${escapeHtml(c.token || '')}</td>
+    <td class="col-patient" title="${escapeHtml(c.patientName || '')}">${escapeHtml(c.patientName || '—')}</td>
+    <td class="col-procedure" title="${escapeHtml(c.procedure || c.specialty || '')}">${escapeHtml(c.procedure || c.specialty || '—')}</td>
+    <td class="col-surgeon" title="${escapeHtml(c.surgeon || '')}">${escapeHtml(c.surgeon || '—')}</td>
+    <td class="col-stage">
       <span class="stage-pill" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span>
-      <span class="elapsed-mini">${since != null ? fmtDuration(since) : ''}</span>
-    </div>
-  </div>`;
+    </td>
+    <td class="col-elapsed">${since != null ? fmtDuration(since) : ''}</td>
+  </tr>`;
 }
 
 let boardClockTimer = null;
