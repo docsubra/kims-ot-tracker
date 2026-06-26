@@ -949,14 +949,266 @@ table.data tbody tr:hover { background: var(--surface-2); }
   opacity: 0.4;
 }
 
+/* Recently Moved to Ward — separate section at the bottom of the lobby */
+.lobby-discharged-section {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+}
+.lobby-discharged-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.lobby-discharged-title {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.01em;
+}
+.lobby-discharged-title .check {
+  display: inline-block;
+  width: 28px; height: 28px;
+  margin-right: 10px;
+  vertical-align: middle;
+  background: #10b981;
+  border-radius: 50%;
+  color: white;
+  text-align: center;
+  line-height: 28px;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 0 18px rgba(16,185,129,0.5);
+}
+.lobby-discharged-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+}
+.lobby-discharged-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* Tile styling for discharged cases — green/calm rather than active */
+.lobby-tile.discharged {
+  background: rgba(16,185,129,0.10);
+  border-color: rgba(16,185,129,0.30);
+  padding: 16px 18px;
+  opacity: 0.95;
+}
+.lobby-tile.discharged .token {
+  font-size: 28px;
+  color: rgba(255,255,255,0.92);
+}
+.lobby-tile.discharged .ot-tag {
+  background: rgba(16,185,129,0.20);
+  font-size: 12px;
+}
+.lobby-tile.discharged .surgeon {
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.lobby-tile.discharged .status-row {
+  align-items: center;
+  gap: 10px;
+}
+.lobby-tile.discharged .stage-dot {
+  background: #10b981 !important;
+  box-shadow: 0 0 12px rgba(16,185,129,0.7);
+}
+.lobby-tile.discharged .stage-text {
+  font-size: 16px;
+  color: rgba(255,255,255,0.85);
+  font-weight: 500;
+}
+.lobby-tile.discharged .lobby-meta {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 8px;
+}
+.lobby-tile.discharged .discharge-time {
+  font-weight: 600;
+  color: #34d399;
+  letter-spacing: 0.02em;
+}
+
 .lobby-foot {
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.10);
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
   font-size: 12px;
-  opacity: 0.5;
+}
+.lobby-foot .privacy-block {
+  max-width: 75%;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.5;
+}
+.lobby-foot .privacy-block .privacy-strong {
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+}
+.lobby-foot .refresh-block {
+  text-align: right;
+  color: rgba(255,255,255,0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ LOBBY SPLASH SCREEN ============ */
+.lobby-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0a1424 0%, #1a2942 50%, #14213d 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.2s ease;
+}
+.lobby-splash.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.lobby-splash::before {
+  /* Soft radial glow behind the content */
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw; height: 80vh;
+  background: radial-gradient(circle, rgba(202,220,252,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.splash-slide {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 1500px);
+  text-align: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 1.0s ease;
+  padding: 50px;
+}
+.splash-slide.active {
+  opacity: 1;
+}
+.splash-slide .splash-eyebrow {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  color: rgba(202,220,252,0.8);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+.splash-slide .splash-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: clamp(72px, 9vw, 130px);
+  line-height: 1.10;
+  letter-spacing: -0.02em;
+  margin-bottom: 50px;
+  color: white;
+}
+.splash-slide .splash-title .accent {
+  color: #F6B100;
+  font-style: italic;
+  font-weight: 500;
+}
+.splash-slide .splash-body {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(32px, 3.4vw, 46px);
+  line-height: 1.45;
+  font-weight: 300;
+  color: rgba(255,255,255,0.92);
+  max-width: 1200px;
+  margin: 0 auto;
+  font-style: italic;
+}
+.splash-slide .splash-body strong {
+  font-style: normal;
+  font-weight: 500;
+  color: white;
+}
+.splash-slide .splash-foot {
+  margin-top: 64px;
+  font-size: 22px;
+  font-weight: 500;
+  color: rgba(202,220,252,0.7);
+  letter-spacing: 0.10em;
+}
+
+/* Stage-guide layout (for the "Understanding the stages" slide) */
+.splash-stages {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 60px;
+  max-width: 1300px;
+  margin: 0 auto;
+  text-align: left;
+}
+.splash-stages .stage-item {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+}
+.splash-stages .stage-item .stage-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: clamp(28px, 2.6vw, 36px);
+  color: #F6B100;
+  white-space: nowrap;
+}
+.splash-stages .stage-item .stage-desc {
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 300;
+  color: rgba(255,255,255,0.92);
+  line-height: 1.35;
+}
+
+/* Bottom progress indicator (5 dots) */
+.splash-progress {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+  z-index: 10;
+}
+.splash-progress .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transition: all 0.4s ease;
+}
+.splash-progress .dot.active {
+  background: #F6B100;
+  width: 40px;
+  border-radius: 99px;
+}
+
+/* KIMS signature in the corner */
+.splash-corner-mark {
+  position: absolute;
+  bottom: 36px;
+  right: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(202,220,252,0.45);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 /* ============ OT RECEPTION BOARD (Row-Table Layout) ============ */
@@ -3572,10 +3824,29 @@ function attachAnalyticsHandlers() {
 /* =========================================================
    LOBBY DISPLAY
    ========================================================= */
+// Recently-discharged cases stay visible for this many hours after
+// 'Shifted to Ward' so families get explicit closure.
+const LOBBY_DISCHARGED_GRACE_MS = 3 * 60 * 60 * 1000;  // 3 hours
+
 function renderLobby() {
   const setupOk = !!CONFIG.APPS_SCRIPT_URL;
-  const visibleCases = state.cases.filter(c => !c.stages.discharged);
   const now = new Date();
+  const cutoff = now.getTime() - LOBBY_DISCHARGED_GRACE_MS;
+
+  // Split today's cases into two groups:
+  // 1) Active — anything not yet discharged
+  // 2) Recently discharged — discharged within the last 3 hours
+  const activeCases = state.cases.filter(c => !c.stages.discharged);
+  const recentlyDischarged = state.cases.filter(c => {
+    if (!c.stages.discharged) return false;
+    const dt = c.stages.discharged instanceof Date ? c.stages.discharged.getTime() : new Date(c.stages.discharged).getTime();
+    return dt >= cutoff;
+  }).sort((a, b) => {
+    // Most recently discharged first
+    const aT = a.stages.discharged instanceof Date ? a.stages.discharged.getTime() : new Date(a.stages.discharged).getTime();
+    const bT = b.stages.discharged instanceof Date ? b.stages.discharged.getTime() : new Date(b.stages.discharged).getTime();
+    return bT - aT;
+  });
 
   return `
     <div class="lobby">
@@ -3592,26 +3863,75 @@ function renderLobby() {
 
       ${!setupOk
         ? `<div class="empty-state" style="color:#fff; opacity:0.7;"><div class="big">⚙</div><div>Waiting for setup…</div></div>`
-        : visibleCases.length === 0
+        : (activeCases.length === 0 && recentlyDischarged.length === 0)
           ? `<div class="lobby-empty">No active cases at the moment</div>`
-          : `<div class="lobby-grid">
-              ${visibleCases.map(renderLobbyTile).join('')}
-            </div>`
+          : `
+            ${activeCases.length > 0 ? `
+              <div class="lobby-grid">
+                ${activeCases.map(c => renderLobbyTile(c, false)).join('')}
+              </div>
+            ` : `
+              <div class="lobby-empty" style="font-size:22px; padding:40px 20px;">All current cases have been moved to ward</div>
+            `}
+
+            ${recentlyDischarged.length > 0 ? `
+              <div class="lobby-discharged-section">
+                <div class="lobby-discharged-head">
+                  <div class="lobby-discharged-title">
+                    <span class="check">✓</span>Recently Moved to Ward
+                  </div>
+                  <div class="lobby-discharged-sub">Shown for ${LOBBY_DISCHARGED_GRACE_MS / 3600000} hours after transfer · ${recentlyDischarged.length} ${recentlyDischarged.length === 1 ? 'patient' : 'patients'}</div>
+                </div>
+                <div class="lobby-discharged-grid">
+                  ${recentlyDischarged.map(c => renderLobbyTile(c, true)).join('')}
+                </div>
+              </div>
+            ` : ''}
+          `
       }
 
       <div class="lobby-foot">
-        <div>For your privacy, patients are shown by token number only.</div>
-        <div>Updates every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'}</div>
+        <div class="privacy-block">
+          <span class="privacy-strong">For your privacy, patients are shown by token number only.</span>
+          Please approach the OT reception desk for any questions about your relative's status.
+        </div>
+        <div class="refresh-block">
+          Updates every ${CONFIG.REFRESH_MS/1000}s<br>Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'}
+        </div>
       </div>
     </div>
   `;
 }
 
-function renderLobbyTile(c) {
+function renderLobbyTile(c, isDischarged) {
   const stage = currentStage(c);
   const since = timeSinceStage(c, stage.id);
   const dur = c.expected_duration_min;
   const durLabel = dur ? formatExpectedDuration(dur) : '';
+
+  // For discharged tiles, override the display with a calm "Moved to ward" message
+  // and show the time of transfer rather than the elapsed time in the stage.
+  if (isDischarged) {
+    const dt = c.stages.discharged instanceof Date ? c.stages.discharged : new Date(c.stages.discharged);
+    const timeStr = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `
+      <div class="lobby-tile discharged" data-token="${escapeHtml(c.token)}">
+        <div class="token-row">
+          <div class="token">${escapeHtml(c.token || '—')}</div>
+          <div class="ot-tag">${escapeHtml(c.theatre || '')}</div>
+        </div>
+        <div class="surgeon">${escapeHtml(c.surgeon ? 'Surgeon: ' + c.surgeon : 'Surgical team')}</div>
+        <div class="status-row">
+          <div class="stage-dot"></div>
+          <div class="stage-text">Moved to Ward</div>
+        </div>
+        <div class="lobby-meta">
+          <span class="discharge-time">Transferred at ${escapeHtml(timeStr)}</span>
+        </div>
+      </div>
+    `;
+  }
+
   return `
     <div class="lobby-tile" data-token="${escapeHtml(c.token)}">
       <div class="token-row">
@@ -3647,8 +3967,172 @@ function attachLobbyHandlers() {
     const t = $('#lobby-time');
     if (t) t.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true});
   }, 30000);
+
+  // Start the splash rotator — but only once, not on every refresh.
+  // The lobby calls attachLobbyHandlers() every ~15s when data refreshes;
+  // we don't want to reset the splash timer that often.
+  if (!splashTimers.initialised) {
+    splashTimers.initialised = true;
+    startLobbySplash();
+  }
 }
 let lobbyClockTimer = null;
+
+/* =========================================================
+   LOBBY SPLASH SCREEN
+   Periodic welcome message that takes over the lobby display
+   for ~60 seconds every 5 minutes. Five carefully chosen slides
+   that acknowledge the family's wait, set expectations, and
+   thank them.
+   ========================================================= */
+
+const SPLASH_INTERVAL_MS = 5 * 60 * 1000;   // every 5 minutes
+const SPLASH_SLIDE_MS = 12 * 1000;          // each slide shown for 12s
+
+const SPLASH_SLIDES = [
+  {
+    eyebrow: 'A WARM WELCOME',
+    title: 'Welcome.',
+    body: 'While you wait, we are taking care of your loved one.',
+    foot: 'Department of Anaesthesia · KIMS Hospital, Mahadevapura'
+  },
+  {
+    eyebrow: 'WHAT TO EXPECT',
+    title: 'Surgery is a journey,<br><span class="accent">not a moment.</span>',
+    body: 'From preparation to recovery, your loved one will pass through several stages — <strong>each one important, each one carefully attended to.</strong>'
+  },
+  {
+    eyebrow: 'UNDERSTANDING THE SCREEN',
+    title: 'What you\'ll see',
+    stages: [
+      { name: 'In Pre-Op',          desc: 'Final checks before surgery' },
+      { name: 'In OT',              desc: 'In the theatre, preparation underway' },
+      { name: 'Surgery in progress', desc: 'The operation is happening' },
+      { name: 'Preparing for recovery', desc: 'Surgery done, careful next steps' },
+      { name: 'In Recovery',        desc: 'Being monitored before the ward' },
+      { name: 'Moved to Ward',      desc: 'Safely transferred to rest' }
+    ]
+  },
+  {
+    eyebrow: 'A GENTLE REMINDER',
+    title: 'Stages take time.<br><span class="accent">That is good.</span>',
+    body: 'Your loved one is in skilled hands. Every stage — anaesthesia, surgery, recovery — is given the time it needs. <strong>We do not rush. We do it well.</strong>'
+  },
+  {
+    eyebrow: 'WITH GRATITUDE',
+    title: 'Thank you for<br>trusting us with<br><span class="accent">someone you love.</span>',
+    foot: 'Department of Anaesthesia · KIMS Hospital, Mahadevapura'
+  }
+];
+
+let splashTimers = {
+  initialised: false,
+  firstShow: null,
+  interval: null,
+  slideTimers: [],
+  fadeOutTimer: null
+};
+
+function startLobbySplash() {
+  // Show splash for the first time after 15s (gives the page a moment to settle),
+  // then every SPLASH_INTERVAL_MS thereafter.
+  const initialDelay = 15 * 1000;
+  splashTimers.firstShow = setTimeout(() => {
+    runSplashCycle();
+    splashTimers.interval = setInterval(runSplashCycle, SPLASH_INTERVAL_MS);
+  }, initialDelay);
+}
+
+function runSplashCycle() {
+  // Don't show splash if there are no cases at all (lobby is empty anyway)
+  if (state.cases.length === 0) return;
+
+  // Don't stack splashes if one is somehow still on screen
+  const existing = $('#lobby-splash');
+  if (existing) existing.remove();
+  splashTimers.slideTimers.forEach(t => clearTimeout(t));
+  splashTimers.slideTimers = [];
+  if (splashTimers.fadeOutTimer) clearTimeout(splashTimers.fadeOutTimer);
+
+  // Create the splash container
+  const splash = document.createElement('div');
+  splash.id = 'lobby-splash';
+  splash.className = 'lobby-splash';
+
+  // Build all slides upfront, only first is .active
+  splash.innerHTML = `
+    ${SPLASH_SLIDES.map((s, i) => renderSplashSlide(s, i)).join('')}
+    <div class="splash-progress">
+      ${SPLASH_SLIDES.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" data-slide-dot="${i}"></span>`).join('')}
+    </div>
+    <div class="splash-corner-mark">KIMS · Mahadevapura</div>
+  `;
+
+  document.body.appendChild(splash);
+
+  // Fade in
+  requestAnimationFrame(() => {
+    splash.classList.add('visible');
+    const first = splash.querySelector('[data-slide-idx="0"]');
+    if (first) first.classList.add('active');
+  });
+
+  // Schedule slide transitions
+  SPLASH_SLIDES.forEach((_, i) => {
+    if (i === 0) return; // first is already active
+    const t = setTimeout(() => {
+      // Hide previous
+      const prev = splash.querySelector('.splash-slide.active');
+      if (prev) prev.classList.remove('active');
+      const prevDot = splash.querySelector(`.dot.active`);
+      if (prevDot) prevDot.classList.remove('active');
+      // Show current after a brief gap (for the fade-out)
+      setTimeout(() => {
+        const cur = splash.querySelector(`[data-slide-idx="${i}"]`);
+        if (cur) cur.classList.add('active');
+        const dot = splash.querySelector(`[data-slide-dot="${i}"]`);
+        if (dot) dot.classList.add('active');
+      }, 600);
+    }, i * SPLASH_SLIDE_MS);
+    splashTimers.slideTimers.push(t);
+  });
+
+  // Schedule fade-out after the last slide
+  splashTimers.fadeOutTimer = setTimeout(() => {
+    splash.classList.remove('visible');
+    setTimeout(() => splash.remove(), 1500);
+  }, SPLASH_SLIDES.length * SPLASH_SLIDE_MS);
+}
+
+function renderSplashSlide(slide, idx) {
+  if (slide.stages) {
+    // Stage-guide slide
+    return `
+      <div class="splash-slide" data-slide-idx="${idx}">
+        ${slide.eyebrow ? `<div class="splash-eyebrow">${escapeHtml(slide.eyebrow)}</div>` : ''}
+        <div class="splash-title">${slide.title}</div>
+        <div class="splash-stages">
+          ${slide.stages.map(s => `
+            <div class="stage-item">
+              <div class="stage-name">${escapeHtml(s.name)}</div>
+              <div class="stage-desc">${escapeHtml(s.desc)}</div>
+            </div>
+          `).join('')}
+        </div>
+        ${slide.foot ? `<div class="splash-foot">${escapeHtml(slide.foot)}</div>` : ''}
+      </div>
+    `;
+  }
+  // Regular content slide
+  return `
+    <div class="splash-slide" data-slide-idx="${idx}">
+      ${slide.eyebrow ? `<div class="splash-eyebrow">${escapeHtml(slide.eyebrow)}</div>` : ''}
+      <div class="splash-title">${slide.title}</div>
+      ${slide.body ? `<div class="splash-body">${slide.body}</div>` : ''}
+      ${slide.foot ? `<div class="splash-foot">${escapeHtml(slide.foot)}</div>` : ''}
+    </div>
+  `;
+}
 
 /* =========================================================
    OT RECEPTION BOARD (Row-Table Layout)
