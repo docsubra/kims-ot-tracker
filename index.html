@@ -359,6 +359,380 @@ body {
 /* ============ ADMIN DASHBOARD ============ */
 .admin-grid { display: grid; gap: 14px; }
 
+/* OT Analytics Section */
+.analytics-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.analytics-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.analytics-head h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+.analytics-head .sub {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.analytics-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.tab-row {
+  display: inline-flex;
+  background: var(--surface-2);
+  border-radius: 99px;
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+.tab-row button {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  border-radius: 99px;
+  letter-spacing: 0.02em;
+}
+.tab-row button.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 6px rgba(26,77,140,0.25);
+}
+.analytics-controls input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+/* Summary KPI strip */
+.analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.analytics-summary .kpi-mini {
+  background: linear-gradient(135deg, var(--primary-light) 0%, white 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+.analytics-summary .kpi-mini .label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.analytics-summary .kpi-mini .value {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-top: 2px;
+  line-height: 1;
+}
+.analytics-summary .kpi-mini .sub {
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+
+/* Per-OT analytics table */
+.ot-analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.ot-analytics-table thead th {
+  position: sticky; top: 0;
+  background: var(--surface-2);
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+.ot-analytics-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ot-analytics-table tbody tr:hover { background: var(--surface-2); }
+.ot-analytics-table .ot-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+.ot-analytics-table .util-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+}
+.ot-analytics-table .util-bar {
+  flex: 1;
+  height: 7px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.ot-analytics-table .util-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 4px;
+}
+.ot-analytics-table .util-bar-fill.high { background: #ef4444; }
+.ot-analytics-table .util-bar-fill.med  { background: #f59e0b; }
+.ot-analytics-table .util-bar-fill.low  { background: #10b981; }
+.ot-analytics-table .util-pct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-width: 38px;
+  text-align: right;
+  font-size: 12px;
+}
+.ot-analytics-table .time-cell {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+.ot-analytics-table .time-cell.late { color: #b91c1c; font-weight: 600; }
+.ot-analytics-table .empty-cell { color: var(--ink-3); font-style: italic; }
+.ot-analytics-table .ot-empty-row td { background: var(--surface-2); opacity: 0.6; }
+
+/* Gantt-style timeline for daily view */
+.gantt-section { margin-top: 20px; }
+.gantt-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.gantt-head h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.gantt-head .legend {
+  font-size: 11px;
+  color: var(--ink-3);
+  display: flex;
+  gap: 14px;
+}
+.gantt-head .legend span { display: inline-flex; align-items: center; gap: 4px; }
+.gantt-head .legend .swatch { width: 10px; height: 10px; border-radius: 2px; }
+.gantt-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  background: white;
+}
+.gantt {
+  min-width: 720px;
+  position: relative;
+}
+.gantt-axis {
+  display: flex;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--ink-3);
+  font-weight: 600;
+  padding-left: 70px;
+}
+.gantt-axis .hour {
+  flex: 1;
+  text-align: left;
+  padding: 6px 0 6px 4px;
+  border-left: 1px solid var(--border);
+}
+.gantt-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 30px;
+  border-bottom: 1px solid var(--border);
+}
+.gantt-row:last-child { border-bottom: none; }
+.gantt-label {
+  width: 70px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border);
+}
+.gantt-track {
+  flex: 1;
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc((100%/14) - 1px),
+      var(--border) calc((100%/14) - 1px),
+      var(--border) calc(100%/14)
+    );
+}
+.gantt-bar {
+  position: absolute;
+  height: 16px;
+  top: 7px;
+  border-radius: 3px;
+  font-size: 9px;
+  color: white;
+  padding: 1px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.gantt-bar.surgery { background: #1a4d8c; }
+.gantt-bar.in-ot   { background: #7c3aed; }
+.gantt-bar.recovery{ background: #059669; }
+.gantt-now-line {
+  position: absolute;
+  top: 0; bottom: 0; width: 1px;
+  background: #ef4444;
+  pointer-events: none;
+  z-index: 2;
+}
+.gantt-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ink-3);
+  font-style: italic;
+  font-size: 13px;
+}
+
+/* Weekly heatmap */
+.heatmap-section { margin-top: 20px; }
+.heatmap-section h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.heatmap-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.heatmap {
+  min-width: 600px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: white;
+}
+.heatmap th {
+  background: var(--surface-2);
+  padding: 7px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.heatmap th:first-child { text-align: left; }
+.heatmap td {
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  text-align: center;
+  position: relative;
+  font-variant-numeric: tabular-nums;
+}
+.heatmap td.ot-label {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--primary-dark);
+  padding: 8px 12px;
+  font-family: 'Fraunces', serif;
+  text-align: left;
+}
+.heatmap td.heat-cell {
+  padding: 10px 4px;
+  font-size: 12px;
+  color: white;
+  font-weight: 600;
+}
+.heatmap td.heat-cell.no-data { background: var(--surface-2); color: var(--ink-3); font-weight: 400; }
+
+/* Monthly trend lines */
+.trend-section { margin-top: 20px; }
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.trend-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.trend-card h5 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.trend-card .big-num {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.trend-card svg { display: block; width: 100%; height: 60px; }
+
+.analytics-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--ink-3);
+  font-style: italic;
+  font-size: 13px;
+}
+
+
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1048,6 +1422,12 @@ const CONFIG = {
 
   HOSPITAL_NAME: 'KIMS Hospital, Mahadevapura',
   DEPARTMENT_NAME: 'Department of Anaesthesia',
+
+  // OT working hours window used for utilisation % calculations.
+  // Cases running outside this window count towards "overtime" totals.
+  // Defaults: 8 AM to 4 PM (8-hour standard elective day at KIMS).
+  OT_DAY_START_HOUR: 8,
+  OT_DAY_END_HOUR: 16,
 };
 
 /* ---------- STAGES ---------- */
@@ -1199,7 +1579,13 @@ function normalizeCase(c) {
 }
 
 async function createCase(payload) {
-  const data = await api('create', { ...payload, date: todayISO() });
+  // Use the user-provided case_date if available (allows retrospective entry),
+  // otherwise default to today.
+  const date = payload.case_date || todayISO();
+  // Remove case_date from payload since the backend uses 'date'
+  const clean = { ...payload };
+  delete clean.case_date;
+  const data = await api('create', { ...clean, date });
   await fetchCases();
   return data;
 }
@@ -1524,12 +1910,19 @@ function openCaseModal(existing = null) {
             </select>
           </div>
         </div>
+        ${!isEdit ? `
+        <div class="field">
+          <label>Case Date <span style="font-weight:400; opacity:0.6;">(defaults to today — change only for retrospective entry)</span></label>
+          <input name="case_date" type="date" value="${todayISO()}">
+        </div>` : `
+        <input type="hidden" name="case_date" value="${escapeHtml(c.date || todayISO())}">
+        `}
         <div class="field">
           <label>Case Type</label>
           <div class="radio-row">
             <label class="radio-option">
               <input type="radio" name="case_type" value="elective" ${(c.case_type || 'elective') === 'elective' ? 'checked' : ''} data-case-type-radio>
-              <span>Elective (scheduled)</span>
+              <span>Elective</span>
             </label>
             <label class="radio-option">
               <input type="radio" name="case_type" value="emergency" ${c.case_type === 'emergency' ? 'checked' : ''} data-case-type-radio>
@@ -1538,7 +1931,7 @@ function openCaseModal(existing = null) {
           </div>
         </div>
         <div class="field" id="scheduled-time-field" style="${c.case_type === 'emergency' ? 'display:none;' : ''}">
-          <label>Scheduled Time <span style="font-weight:400; opacity:0.6;">(24-hour format, e.g. 09:30, 14:15)</span></label>
+          <label>Scheduled Time <span style="font-weight:400; opacity:0.6;">(optional — leave blank if no specific schedule)</span></label>
           <input name="scheduled_time" type="time" value="${escapeHtml(c.scheduled_time || '')}" placeholder="HH:MM">
         </div>
         <div class="field">
@@ -1596,7 +1989,7 @@ function openCaseModal(existing = null) {
         </div>
         ${isEdit ? `
         <div class="field">
-          <label>Stage Timeline · Click any stage to set, edit or clear its time</label>
+          <label>Stage Timeline <span style="font-weight:400; opacity:0.6;">— Now sets to current time · ✎ picks any past time · ✕ clears</span></label>
           <div class="timeline-editor">
             ${STAGES.map(s => {
               const ts = c.stages[s.id];
@@ -1739,12 +2132,9 @@ function openCaseModal(existing = null) {
     // Default case_type to elective if not specified (radio not in group)
     if (!payload.case_type) payload.case_type = 'elective';
 
-    // Validation: elective cases must have a scheduled time
-    if (payload.case_type === 'elective' && !payload.scheduled_time) {
-      toast('Elective cases need a scheduled time. Use Emergency for unscheduled cases.', 'error');
-      return;
-    }
-    // Emergency cases ignore scheduled_time
+    // Scheduled time is now optional for both elective and emergency.
+    // Elective cases without a scheduled time show at the bottom of the daily list
+    // and on the lobby display with "Today" instead of a time.
     if (payload.case_type === 'emergency') {
       payload.scheduled_time = '';
     }
@@ -2036,6 +2426,8 @@ function renderAdmin() {
             </div>
           </div>
 
+          ${renderOTAnalytics()}
+
           <div class="panel">
             <div class="panel-title">All Cases Today</div>
             <div class="table-wrap">
@@ -2149,8 +2541,16 @@ function attachAdminHandlers() {
 
   $('#export-csv')?.addEventListener('click', exportCsv);
   $('#print-report')?.addEventListener('click', () => window.print());
-  $('#download-list-pdf')?.addEventListener('click', () => downloadDailyList('pdf'));
-  $('#download-list-doc')?.addEventListener('click', () => downloadDailyList('doc'));
+  $('#download-list-pdf')?.addEventListener('click', () => promptDailyListDate('pdf'));
+  $('#download-list-doc')?.addEventListener('click', () => promptDailyListDate('doc'));
+
+  // OT Analytics — initialise state on first render and load data
+  if (!analyticsState.anchorDate) analyticsState.anchorDate = todayISO();
+  attachAnalyticsHandlers();
+  // Load data for the current view if not yet loaded
+  if (analyticsState.rangeCases.length === 0) {
+    refreshAnalyticsBody();
+  }
 }
 
 function drawTheatreChart() {
@@ -2226,15 +2626,78 @@ function exportCsv() {
 }
 
 /**
+ * Prompts for a date, then fetches cases for that date and triggers
+ * Daily List download. Defaults to today.
+ */
+function promptDailyListDate(format) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-head">
+        <h2>Daily List · Select Date</h2>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px; color:var(--ink-2); margin-bottom:14px;">
+          Pick the date for which to generate the ${format === 'pdf' ? 'PDF' : 'Word document'}. Defaults to today.
+        </p>
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="daily-list-date" value="${todayISO()}" max="${todayISO()}">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" id="daily-list-cancel">Cancel</button>
+        <button class="btn primary" id="daily-list-go">Generate</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  $('#daily-list-cancel', modal).addEventListener('click', close);
+
+  $('#daily-list-go', modal).addEventListener('click', async () => {
+    const date = $('#daily-list-date', modal).value;
+    if (!date) { toast('Please pick a date', 'error'); return; }
+    const goBtn = $('#daily-list-go', modal);
+    goBtn.disabled = true;
+    goBtn.textContent = 'Fetching…';
+    try {
+      // If date is today, use current state cases (fast). Otherwise fetch.
+      let casesForDate;
+      if (date === todayISO()) {
+        casesForDate = state.cases.slice();
+      } else {
+        const data = await api('list', { date });
+        casesForDate = (data.cases || []).map(normalizeCase);
+      }
+      if (casesForDate.length === 0) {
+        toast(`No cases recorded for ${date}`, 'error');
+        goBtn.disabled = false;
+        goBtn.textContent = 'Generate';
+        return;
+      }
+      close();
+      downloadDailyList(format, casesForDate, date);
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+      goBtn.disabled = false;
+      goBtn.textContent = 'Generate';
+    }
+  });
+}
+
+/**
  * Generate the day's case list as a PDF or Word doc.
  * Approach: build a styled HTML document with a print stylesheet
  * and either trigger the browser's print-to-PDF dialog (PDF mode)
  * or save it as an .doc file (Word mode — Word reads HTML cleanly).
  */
-function downloadDailyList(format) {
-  const cases = state.cases.slice();
+function downloadDailyList(format, casesForDate, dateStr) {
+  const cases = (casesForDate || state.cases).slice();
   if (cases.length === 0) {
-    toast('No cases today to print', 'error');
+    toast('No cases to print', 'error');
     return;
   }
 
@@ -2253,9 +2716,11 @@ function downloadDailyList(format) {
     return new Date(a.created) - new Date(b.created);
   });
 
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const generatedStr = today.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, day: '2-digit', month: 'short' });
+  // Use the supplied date if available, otherwise fall back to today
+  const reportDate = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
+  const now = new Date();
+  const dateLabel = reportDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const generatedStr = now.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, day: '2-digit', month: 'short' });
 
   const electives = cases.filter(c => c.case_type !== 'emergency');
   const emergencies = cases.filter(c => c.case_type === 'emergency');
@@ -2282,7 +2747,7 @@ function downloadDailyList(format) {
   const docHtml = `<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
-<title>KIMS OT Daily List — ${dateStr}</title>
+<title>KIMS OT Daily List — ${dateLabel}</title>
 <style>
   @page { size: A4 landscape; margin: 12mm; }
   body { font-family: Calibri, Arial, sans-serif; color: #14181f; font-size: 11pt; margin: 0; padding: 16px; }
@@ -2302,7 +2767,7 @@ function downloadDailyList(format) {
   <div class="head">
     <h1>OT Daily Case List</h1>
     <div class="sub">Department of Anaesthesia · KIMS Hospital, Mahadevapura</div>
-    <div class="date-line">${escapeHtml(dateStr)}</div>
+    <div class="date-line">${escapeHtml(dateLabel)}</div>
   </div>
 
   <div class="summary">
@@ -2369,7 +2834,7 @@ function downloadDailyList(format) {
     const blob = new Blob([styledWord], { type: 'application/msword' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `KIMS-OT-Daily-List-${todayISO()}.doc`;
+    a.download = `KIMS-OT-Daily-List-${dateStr || todayISO()}.doc`;
     a.click();
   }
 }
@@ -2402,6 +2867,704 @@ function computeTurnover(cases) {
     }
   });
   return byTheatre;
+}
+
+/* =========================================================
+   OT ANALYTICS MODULE
+   Pure-frontend analytics. Crunches the existing case data
+   to produce OT utilisation, occupancy, and timing metrics.
+   ========================================================= */
+
+// State for the analytics panel — current view (day/week/month) and date
+const analyticsState = {
+  view: 'day',         // 'day' | 'week' | 'month'
+  anchorDate: null,    // YYYY-MM-DD — the date the user is centred on
+  loading: false,
+  rangeCases: []       // cases for the current range (fetched on demand)
+};
+
+/**
+ * Returns the start/end Date objects for a working day window
+ * given a YYYY-MM-DD string. Uses CONFIG.OT_DAY_START_HOUR/END_HOUR.
+ */
+function otWindowFor(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const start = new Date(y, m - 1, d, CONFIG.OT_DAY_START_HOUR, 0, 0, 0);
+  const end   = new Date(y, m - 1, d, CONFIG.OT_DAY_END_HOUR, 0, 0, 0);
+  return { start, end, hours: (end - start) / 3600000 };
+}
+
+/**
+ * Per-OT metrics for a single date.
+ * Returns: { otName: { cases, firstStart, lastEnd, occupancyMs, surgeryMs,
+ *                       turnovers[], overtimeMs, utilisationPct, surgeryUtilPct } }
+ */
+function computeDailyOTMetrics(cases, dateStr) {
+  const { start: dayStart, end: dayEnd, hours: dayHours } = otWindowFor(dateStr);
+  const dayMs = dayHours * 3600000;
+  const result = {};
+
+  CONFIG.THEATRES.forEach(ot => {
+    const otCases = cases
+      .filter(c => c.theatre === ot)
+      .sort((a, b) => (a.stages.in_ot || a.stages.registered || new Date(0)) -
+                       (b.stages.in_ot || b.stages.registered || new Date(0)));
+
+    if (otCases.length === 0) {
+      result[ot] = {
+        cases: 0, firstStart: null, lastEnd: null,
+        occupancyMs: 0, surgeryMs: 0, turnovers: [],
+        overtimeMs: 0, utilisationPct: 0, surgeryUtilPct: 0
+      };
+      return;
+    }
+
+    // First-case start = first "In OT" timestamp of the day
+    const firstStart = otCases.find(c => c.stages.in_ot)?.stages.in_ot || null;
+    // Last-case end = the time the last patient LEFT the OT room.
+    // Patient leaves OT after emergence (or surgery completion if no emergence recorded).
+    // Subsequent PACU/discharge times are recovery — OT is free during those.
+    let lastEnd = null;
+    for (let i = otCases.length - 1; i >= 0; i--) {
+      const end = otCases[i].stages.emergence || otCases[i].stages.completed;
+      if (end) { lastEnd = end; break; }
+    }
+
+    // Occupancy = sum of (in_ot -> patient leaves OT) intervals.
+    // The OT room itself is occupied from 'in_ot' until 'emergence' (or 'completed' fallback).
+    // Once the patient moves to PACU/recovery, the OT is free.
+    let occupancyMs = 0;
+    let surgeryMs = 0;
+    let overtimeMs = 0;
+    otCases.forEach(c => {
+      const inOt  = c.stages.in_ot;
+      const outOt = c.stages.emergence || c.stages.completed;  // patient leaves the OT room
+      if (inOt && outOt && outOt > inOt) {
+        occupancyMs += (outOt - inOt);
+        // Overtime = portion of this interval outside the working day window
+        const overlap = Math.max(0, Math.min(outOt, dayEnd) - Math.max(inOt, dayStart));
+        const total = outOt - inOt;
+        overtimeMs += (total - overlap);
+      }
+      const surgStart = c.stages.surgery;
+      const surgEnd   = c.stages.completed || c.stages.emergence;
+      if (surgStart && surgEnd && surgEnd > surgStart) {
+        surgeryMs += (surgEnd - surgStart);
+      }
+    });
+
+    // Turnovers between consecutive cases.
+    // Defined as: end of (case N in the OT room) → start of (case N+1 in the OT room).
+    // This includes the room cleanup time + waiting for next patient.
+    const turnovers = [];
+    for (let i = 1; i < otCases.length; i++) {
+      const prev = otCases[i - 1];
+      const next = otCases[i];
+      const out = prev.stages.emergence || prev.stages.completed;
+      const inT = next.stages.in_ot;
+      if (out && inT && inT > out) turnovers.push(inT - out);
+    }
+
+    // Utilisation: occupancy within the working day window / day window length
+    let occupancyWithinDay = 0;
+    otCases.forEach(c => {
+      const inOt = c.stages.in_ot;
+      const outOt = c.stages.emergence || c.stages.completed;
+      if (inOt && outOt && outOt > inOt) {
+        const overlap = Math.max(0, Math.min(outOt, dayEnd) - Math.max(inOt, dayStart));
+        occupancyWithinDay += overlap;
+      }
+    });
+    let surgeryWithinDay = 0;
+    otCases.forEach(c => {
+      const ss = c.stages.surgery;
+      const se = c.stages.completed || c.stages.emergence;
+      if (ss && se && se > ss) {
+        const overlap = Math.max(0, Math.min(se, dayEnd) - Math.max(ss, dayStart));
+        surgeryWithinDay += overlap;
+      }
+    });
+
+    result[ot] = {
+      cases: otCases.length,
+      firstStart, lastEnd,
+      occupancyMs, surgeryMs, turnovers, overtimeMs,
+      utilisationPct: dayMs > 0 ? Math.min(100, (occupancyWithinDay / dayMs) * 100) : 0,
+      surgeryUtilPct: dayMs > 0 ? Math.min(100, (surgeryWithinDay / dayMs) * 100) : 0
+    };
+  });
+
+  return result;
+}
+
+/**
+ * Format Date as HH:MM for the analytics tables.
+ */
+function fmtClock(d) {
+  if (!d) return null;
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+/**
+ * Format minutes as Hh Mm (e.g. "2h 30m") for compact display.
+ */
+function fmtHm(ms) {
+  if (!ms || ms <= 0) return '—';
+  const totalMin = Math.round(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+/**
+ * Returns date strings (YYYY-MM-DD) for a range, inclusive.
+ * For weekly: returns 7 dates ending at anchorDate.
+ * For monthly: returns 30 dates ending at anchorDate.
+ */
+function dateRangeFor(view, anchorDate) {
+  const dates = [];
+  const [y, m, d] = anchorDate.split('-').map(Number);
+  const anchor = new Date(y, m - 1, d);
+  const days = view === 'day' ? 1 : (view === 'week' ? 7 : 30);
+  for (let i = days - 1; i >= 0; i--) {
+    const x = new Date(anchor);
+    x.setDate(anchor.getDate() - i);
+    const ys = x.getFullYear();
+    const ms = String(x.getMonth() + 1).padStart(2, '0');
+    const ds = String(x.getDate()).padStart(2, '0');
+    dates.push(`${ys}-${ms}-${ds}`);
+  }
+  return dates;
+}
+
+/**
+ * Fetches cases for a date range. Uses today's cases (already loaded)
+ * if the range only includes today; otherwise hits the API per date.
+ */
+async function fetchCasesForRange(dates) {
+  const out = [];
+  for (const d of dates) {
+    if (d === todayISO()) {
+      // Use already-loaded cases for today (no API call)
+      state.cases.forEach(c => out.push({ ...c, _date: d }));
+    } else {
+      const data = await api('list', { date: d });
+      (data.cases || []).map(normalizeCase).forEach(c => out.push({ ...c, _date: d }));
+    }
+  }
+  return out;
+}
+
+/**
+ * Renders the full OT Analytics section, including controls and the
+ * current view's content. Returns HTML.
+ */
+function renderOTAnalytics() {
+  const view = analyticsState.view;
+  const date = analyticsState.anchorDate || todayISO();
+  const rangeLabel = (() => {
+    if (view === 'day') return new Date(date + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const dates = dateRangeFor(view, date);
+    const first = new Date(dates[0] + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    const last  = new Date(dates[dates.length - 1] + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${first} → ${last}`;
+  })();
+
+  return `
+    <div class="analytics-section" id="ot-analytics">
+      <div class="analytics-head">
+        <div>
+          <h3>OT Analytics</h3>
+          <div class="sub">${escapeHtml(rangeLabel)} · OT working hours: ${String(CONFIG.OT_DAY_START_HOUR).padStart(2,'0')}:00 – ${String(CONFIG.OT_DAY_END_HOUR).padStart(2,'0')}:00</div>
+        </div>
+        <div class="analytics-controls">
+          <div class="tab-row" role="tablist">
+            <button class="${view === 'day' ? 'active' : ''}" data-view="day">Day</button>
+            <button class="${view === 'week' ? 'active' : ''}" data-view="week">Week</button>
+            <button class="${view === 'month' ? 'active' : ''}" data-view="month">Month</button>
+          </div>
+          <input type="date" id="analytics-date" value="${date}" max="${todayISO()}">
+        </div>
+      </div>
+
+      <div id="analytics-body">
+        ${analyticsState.loading
+          ? `<div class="analytics-loading">Loading data…</div>`
+          : renderAnalyticsView(view, date, analyticsState.rangeCases)
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderAnalyticsView(view, anchorDate, rangeCases) {
+  if (view === 'day')   return renderAnalyticsDay(anchorDate, rangeCases);
+  if (view === 'week')  return renderAnalyticsWeek(anchorDate, rangeCases);
+  if (view === 'month') return renderAnalyticsMonth(anchorDate, rangeCases);
+  return '';
+}
+
+/* ----- DAY VIEW ----- */
+function renderAnalyticsDay(dateStr, rangeCases) {
+  const dayCases = (rangeCases || []).filter(c => c._date === dateStr);
+  const metrics = computeDailyOTMetrics(dayCases, dateStr);
+
+  // Summary KPIs
+  const activeOTs = Object.values(metrics).filter(m => m.cases > 0).length;
+  const totalCases = dayCases.length;
+  const allUtils = Object.values(metrics).filter(m => m.cases > 0).map(m => m.utilisationPct);
+  const avgUtil = allUtils.length ? allUtils.reduce((s, v) => s + v, 0) / allUtils.length : 0;
+  const allFirstStarts = Object.values(metrics).map(m => m.firstStart).filter(Boolean);
+  const avgFirstStart = allFirstStarts.length
+    ? new Date(allFirstStarts.reduce((s, d) => s + d.getTime(), 0) / allFirstStarts.length)
+    : null;
+  const allTurnovers = Object.values(metrics).flatMap(m => m.turnovers);
+  const avgTurnover = allTurnovers.length ? allTurnovers.reduce((s, v) => s + v, 0) / allTurnovers.length : 0;
+  const totalOvertimeMs = Object.values(metrics).reduce((s, m) => s + m.overtimeMs, 0);
+
+  return `
+    <div class="analytics-summary">
+      <div class="kpi-mini">
+        <div class="label">Active OTs</div>
+        <div class="value">${activeOTs}<span style="font-size:14px; color:var(--ink-3); font-weight:400;"> / ${CONFIG.THEATRES.length}</span></div>
+        <div class="sub">${totalCases} cases total</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg utilisation</div>
+        <div class="value">${avgUtil.toFixed(0)}%</div>
+        <div class="sub">${String(CONFIG.OT_DAY_START_HOUR).padStart(2,'0')}:00–${String(CONFIG.OT_DAY_END_HOUR).padStart(2,'0')}:00 window</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg first-case start</div>
+        <div class="value">${avgFirstStart ? fmtClock(avgFirstStart) : '—'}</div>
+        <div class="sub">Across active OTs</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg turnover</div>
+        <div class="value">${avgTurnover ? Math.round(avgTurnover / 60000) + 'm' : '—'}</div>
+        <div class="sub">Between cases</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Total overtime</div>
+        <div class="value">${fmtHm(totalOvertimeMs)}</div>
+        <div class="sub">Outside working hours</div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="ot-analytics-table">
+        <thead>
+          <tr>
+            <th style="width:70px;">OT</th>
+            <th style="width:60px;">Cases</th>
+            <th style="width:90px;">First start</th>
+            <th style="width:90px;">Last end</th>
+            <th style="width:90px;">Occupancy</th>
+            <th style="width:90px;">Surgery time</th>
+            <th style="width:90px;">Avg turnover</th>
+            <th style="width:90px;">Overtime</th>
+            <th>Utilisation</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${CONFIG.THEATRES.map(ot => {
+            const m = metrics[ot];
+            const empty = m.cases === 0;
+            const avgTo = m.turnovers.length ? Math.round(m.turnovers.reduce((s,v)=>s+v,0) / m.turnovers.length / 60000) : null;
+            const utilClass = m.utilisationPct >= 80 ? 'high' : (m.utilisationPct >= 50 ? 'med' : 'low');
+            // Late first start = after 09:00
+            const lateStart = m.firstStart && m.firstStart.getHours() >= 9;
+            return `
+              <tr class="${empty ? 'ot-empty-row' : ''}">
+                <td class="ot-name">${escapeHtml(ot)}</td>
+                <td>${m.cases || '—'}</td>
+                <td class="time-cell ${lateStart ? 'late' : ''}">${m.firstStart ? fmtClock(m.firstStart) : '<span class="empty-cell">—</span>'}</td>
+                <td class="time-cell">${m.lastEnd ? fmtClock(m.lastEnd) : '<span class="empty-cell">—</span>'}</td>
+                <td>${empty ? '—' : fmtHm(m.occupancyMs)}</td>
+                <td>${empty ? '—' : fmtHm(m.surgeryMs)}</td>
+                <td>${avgTo != null ? avgTo + 'm' : '<span class="empty-cell">—</span>'}</td>
+                <td>${m.overtimeMs > 60000 ? fmtHm(m.overtimeMs) : '<span class="empty-cell">—</span>'}</td>
+                <td>
+                  <div class="util-bar-wrap">
+                    <div class="util-bar"><div class="util-bar-fill ${utilClass}" style="width:${m.utilisationPct.toFixed(0)}%"></div></div>
+                    <span class="util-pct">${m.utilisationPct.toFixed(0)}%</span>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="gantt-section">
+      <div class="gantt-head">
+        <h4>OT Day Timeline</h4>
+        <div class="legend">
+          <span><span class="swatch" style="background:#7c3aed;"></span>In OT prep</span>
+          <span><span class="swatch" style="background:#1a4d8c;"></span>Surgery</span>
+          <span><span class="swatch" style="background:#059669;"></span>Emergence</span>
+        </div>
+      </div>
+      ${renderGantt(dayCases, dateStr)}
+    </div>
+  `;
+}
+
+/**
+ * Gantt-style timeline showing each OT's day as horizontal bars
+ * within the configured OT working window.
+ */
+function renderGantt(dayCases, dateStr) {
+  const { start, end, hours } = otWindowFor(dateStr);
+
+  if (dayCases.length === 0) {
+    return `<div class="gantt-wrap"><div class="gantt-empty">No cases recorded for this day.</div></div>`;
+  }
+
+  // Build hour axis (e.g., 08, 09, 10, ..., 16 for default config = 8 hour buckets + final)
+  const hourCount = Math.ceil(hours);
+  const hourLabels = [];
+  for (let i = 0; i < hourCount; i++) {
+    const h = (CONFIG.OT_DAY_START_HOUR + i) % 24;
+    hourLabels.push(String(h).padStart(2, '0'));
+  }
+
+  // For each OT, build bars for the cases that fall within the window
+  const winMs = end - start;
+  const otRows = CONFIG.THEATRES.map(ot => {
+    const otCases = dayCases.filter(c => c.theatre === ot);
+    const bars = [];
+    otCases.forEach(c => {
+      const inOt = c.stages.in_ot;
+      const surgeryStart = c.stages.surgery;
+      const surgeryEnd = c.stages.completed;
+      const emergenceEnd = c.stages.emergence;  // patient leaves OT room
+
+      const addBar = (s, e, cls, label) => {
+        if (!s || !e || e <= s) return;
+        // Clamp to window
+        const s2 = Math.max(s.getTime(), start.getTime());
+        const e2 = Math.min(e.getTime(), end.getTime());
+        if (e2 <= s2) return;
+        const left = ((s2 - start.getTime()) / winMs) * 100;
+        const width = ((e2 - s2) / winMs) * 100;
+        bars.push(`<div class="gantt-bar ${cls}" style="left:${left.toFixed(2)}%; width:${width.toFixed(2)}%;" title="${escapeHtml(label)}">${escapeHtml(c.token || '')}</div>`);
+      };
+
+      // In OT (prep) bar = in_ot -> surgery
+      if (inOt && surgeryStart) addBar(inOt, surgeryStart, 'in-ot', `${c.token} · In OT prep`);
+      // Surgery bar = surgery -> completed
+      if (surgeryStart && surgeryEnd) addBar(surgeryStart, surgeryEnd, 'surgery', `${c.token} · ${c.procedure || 'Surgery'}`);
+      // Emergence bar = completed -> emergence (when patient leaves OT)
+      if (surgeryEnd && emergenceEnd) addBar(surgeryEnd, emergenceEnd, 'recovery', `${c.token} · Emergence`);
+      // If only in_ot exists (case in progress, no surgery yet)
+      if (inOt && !surgeryStart) {
+        addBar(inOt, new Date(), 'in-ot', `${c.token} · In OT (ongoing)`);
+      }
+    });
+    return { ot, bars };
+  });
+
+  // "Now" line if today and now is within the window
+  const now = new Date();
+  const showNow = dateStr === todayISO() && now >= start && now <= end;
+  const nowLeft = showNow ? (((now - start) / winMs) * 100).toFixed(2) : null;
+
+  return `
+    <div class="gantt-wrap">
+      <div class="gantt">
+        <div class="gantt-axis">
+          ${hourLabels.map(h => `<div class="hour">${h}:00</div>`).join('')}
+        </div>
+        ${otRows.map(r => `
+          <div class="gantt-row">
+            <div class="gantt-label">${escapeHtml(r.ot)}</div>
+            <div class="gantt-track">
+              ${r.bars.join('')}
+              ${showNow && CONFIG.THEATRES.indexOf(r.ot) === 0 ? `<div class="gantt-now-line" style="left:${nowLeft}%;"></div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ----- WEEK VIEW ----- */
+function renderAnalyticsWeek(dateStr, rangeCases) {
+  const dates = dateRangeFor('week', dateStr);
+  // Per-OT × per-date utilisation map
+  const utilByOtDate = {};
+  const dailyTotals = dates.map(d => {
+    const dayCases = rangeCases.filter(c => c._date === d);
+    const m = computeDailyOTMetrics(dayCases, d);
+    CONFIG.THEATRES.forEach(ot => {
+      utilByOtDate[ot] = utilByOtDate[ot] || {};
+      utilByOtDate[ot][d] = m[ot];
+    });
+    const allUtils = Object.values(m).filter(x => x.cases > 0).map(x => x.utilisationPct);
+    const avg = allUtils.length ? allUtils.reduce((s,v)=>s+v,0) / allUtils.length : 0;
+    return { date: d, cases: dayCases.length, avgUtil: avg };
+  });
+
+  // Summary
+  const totalCases = rangeCases.length;
+  const weekUtils = dailyTotals.filter(d => d.cases > 0).map(d => d.avgUtil);
+  const avgUtil = weekUtils.length ? weekUtils.reduce((s,v)=>s+v,0) / weekUtils.length : 0;
+  const allOvertime = dates.reduce((sum, d) => {
+    const m = computeDailyOTMetrics(rangeCases.filter(c => c._date === d), d);
+    return sum + Object.values(m).reduce((s, x) => s + x.overtimeMs, 0);
+  }, 0);
+  const busiestDay = dailyTotals.slice().sort((a,b) => b.cases - a.cases)[0];
+
+  return `
+    <div class="analytics-summary">
+      <div class="kpi-mini">
+        <div class="label">Cases this week</div>
+        <div class="value">${totalCases}</div>
+        <div class="sub">${dates.length} days</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg utilisation</div>
+        <div class="value">${avgUtil.toFixed(0)}%</div>
+        <div class="sub">Across all OTs &amp; days</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Busiest day</div>
+        <div class="value" style="font-size:18px;">${busiestDay && busiestDay.cases > 0 ? new Date(busiestDay.date + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' }) : '—'}</div>
+        <div class="sub">${busiestDay ? busiestDay.cases + ' cases' : ''}</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Total overtime</div>
+        <div class="value">${fmtHm(allOvertime)}</div>
+        <div class="sub">Outside working hours</div>
+      </div>
+    </div>
+
+    <div class="heatmap-section">
+      <h4>Utilisation Heatmap · % per OT per day</h4>
+      <div class="heatmap-wrap">
+        <table class="heatmap">
+          <thead>
+            <tr>
+              <th style="width:80px;">OT</th>
+              ${dates.map(d => {
+                const dt = new Date(d + 'T12:00:00');
+                return `<th>${dt.toLocaleDateString('en-IN', { weekday: 'short' })}<br><span style="font-weight:400; font-size:9px;">${dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span></th>`;
+              }).join('')}
+              <th style="width:60px;">Avg</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${CONFIG.THEATRES.map(ot => {
+              const otRow = dates.map(d => utilByOtDate[ot][d]);
+              const otAvg = otRow.filter(x => x && x.cases > 0).map(x => x.utilisationPct);
+              const avgU = otAvg.length ? otAvg.reduce((s,v)=>s+v,0) / otAvg.length : 0;
+              return `
+                <tr>
+                  <td class="ot-label">${escapeHtml(ot)}</td>
+                  ${otRow.map(m => {
+                    if (!m || m.cases === 0) {
+                      return `<td class="heat-cell no-data">—</td>`;
+                    }
+                    const pct = m.utilisationPct;
+                    const color = heatColor(pct);
+                    return `<td class="heat-cell" style="background:${color};" title="${pct.toFixed(0)}% · ${m.cases} cases">${pct.toFixed(0)}%</td>`;
+                  }).join('')}
+                  <td class="heat-cell" style="background:${avgU > 0 ? heatColor(avgU) : 'var(--surface-2)'}; color:${avgU > 0 ? 'white' : 'var(--ink-3)'};">${otAvg.length ? avgU.toFixed(0) + '%' : '—'}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ----- MONTH VIEW ----- */
+function renderAnalyticsMonth(dateStr, rangeCases) {
+  const dates = dateRangeFor('month', dateStr);
+  const daily = dates.map(d => {
+    const dayCases = rangeCases.filter(c => c._date === d);
+    const m = computeDailyOTMetrics(dayCases, d);
+    const utils = Object.values(m).filter(x => x.cases > 0).map(x => x.utilisationPct);
+    const turnovers = Object.values(m).flatMap(x => x.turnovers);
+    const firstStarts = Object.values(m).map(x => x.firstStart).filter(Boolean);
+    const overtimeMs = Object.values(m).reduce((s, x) => s + x.overtimeMs, 0);
+    return {
+      date: d,
+      cases: dayCases.length,
+      avgUtil: utils.length ? utils.reduce((s,v)=>s+v,0) / utils.length : 0,
+      avgTurnover: turnovers.length ? turnovers.reduce((s,v)=>s+v,0) / turnovers.length : 0,
+      avgFirstStart: firstStarts.length ? firstStarts.reduce((s,d)=>s+d.getTime(),0) / firstStarts.length : null,
+      overtimeMs
+    };
+  });
+
+  // Summary KPIs
+  const totalCases = rangeCases.length;
+  const activeDays = daily.filter(d => d.cases > 0).length;
+  const avgUtilOverall = (() => {
+    const u = daily.filter(d => d.cases > 0).map(d => d.avgUtil);
+    return u.length ? u.reduce((s,v)=>s+v,0) / u.length : 0;
+  })();
+  const avgCasesPerDay = activeDays > 0 ? (totalCases / activeDays).toFixed(1) : 0;
+  const allFirstStarts = daily.map(d => d.avgFirstStart).filter(Boolean);
+  const avgFirstStart = allFirstStarts.length ? new Date(allFirstStarts.reduce((s,t)=>s+t,0) / allFirstStarts.length) : null;
+  const onTimeDays = daily.filter(d => d.avgFirstStart && new Date(d.avgFirstStart).getHours() < 9).length;
+  const onTimePct = activeDays > 0 ? (onTimeDays / activeDays) * 100 : 0;
+  const totalOvertime = daily.reduce((s,d) => s + d.overtimeMs, 0);
+
+  return `
+    <div class="analytics-summary">
+      <div class="kpi-mini">
+        <div class="label">Total cases</div>
+        <div class="value">${totalCases}</div>
+        <div class="sub">${activeDays} active days · ${avgCasesPerDay}/day avg</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg utilisation</div>
+        <div class="value">${avgUtilOverall.toFixed(0)}%</div>
+        <div class="sub">Across the month</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg first-case start</div>
+        <div class="value">${avgFirstStart ? fmtClock(avgFirstStart) : '—'}</div>
+        <div class="sub">${onTimePct.toFixed(0)}% of days started before 09:00</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Total overtime</div>
+        <div class="value">${fmtHm(totalOvertime)}</div>
+        <div class="sub">Hours outside ${String(CONFIG.OT_DAY_START_HOUR).padStart(2,'0')}:00–${String(CONFIG.OT_DAY_END_HOUR).padStart(2,'0')}:00</div>
+      </div>
+    </div>
+
+    <div class="trend-section">
+      <div class="trend-grid">
+        ${renderTrendCard('Utilisation %', daily.map(d => d.avgUtil), '%', avgUtilOverall.toFixed(0) + '%')}
+        ${renderTrendCard('Cases per day', daily.map(d => d.cases), '', avgCasesPerDay)}
+        ${renderTrendCard('Avg turnover (min)', daily.map(d => d.avgTurnover / 60000), 'm', daily.filter(d => d.avgTurnover > 0).length ? Math.round(daily.filter(d => d.avgTurnover > 0).reduce((s,d)=>s + d.avgTurnover, 0) / daily.filter(d => d.avgTurnover > 0).length / 60000) + 'm' : '—')}
+        ${renderTrendCard('First-case start (hr)', daily.map(d => d.avgFirstStart ? (new Date(d.avgFirstStart).getHours() + new Date(d.avgFirstStart).getMinutes() / 60) : 0), 'h', avgFirstStart ? fmtClock(avgFirstStart) : '—')}
+      </div>
+    </div>
+
+    <div style="overflow-x:auto; margin-top:20px;">
+      <table class="ot-analytics-table">
+        <thead>
+          <tr>
+            <th style="width:100px;">Date</th>
+            <th style="width:80px;">Cases</th>
+            <th style="width:110px;">First start</th>
+            <th style="width:110px;">Avg turnover</th>
+            <th style="width:110px;">Overtime</th>
+            <th>Utilisation</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${daily.slice().reverse().map(d => {
+            const empty = d.cases === 0;
+            const utilClass = d.avgUtil >= 80 ? 'high' : (d.avgUtil >= 50 ? 'med' : 'low');
+            const lateStart = d.avgFirstStart && new Date(d.avgFirstStart).getHours() >= 9;
+            const dt = new Date(d.date + 'T12:00:00');
+            return `
+              <tr class="${empty ? 'ot-empty-row' : ''}">
+                <td class="ot-name" style="font-size:12px;">${dt.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</td>
+                <td>${d.cases || '—'}</td>
+                <td class="time-cell ${lateStart ? 'late' : ''}">${d.avgFirstStart ? fmtClock(new Date(d.avgFirstStart)) : '<span class="empty-cell">—</span>'}</td>
+                <td>${d.avgTurnover > 0 ? Math.round(d.avgTurnover / 60000) + 'm' : '<span class="empty-cell">—</span>'}</td>
+                <td>${d.overtimeMs > 60000 ? fmtHm(d.overtimeMs) : '<span class="empty-cell">—</span>'}</td>
+                <td>
+                  <div class="util-bar-wrap">
+                    <div class="util-bar"><div class="util-bar-fill ${utilClass}" style="width:${d.avgUtil.toFixed(0)}%"></div></div>
+                    <span class="util-pct">${d.avgUtil.toFixed(0)}%</span>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/** Simple inline SVG sparkline trend card */
+function renderTrendCard(label, values, unit, summaryText) {
+  const max = Math.max(1, ...values);
+  const min = Math.min(0, ...values);
+  const range = max - min || 1;
+  const w = 280, h = 60;
+  const xs = values.map((_, i) => (i / Math.max(1, values.length - 1)) * w);
+  const ys = values.map(v => h - ((v - min) / range) * (h - 8) - 4);
+  const points = xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  // Area fill points
+  const area = `0,${h} ${points} ${w},${h}`;
+  return `
+    <div class="trend-card">
+      <h5>${escapeHtml(label)}</h5>
+      <div class="big-num">${escapeHtml(String(summaryText))}</div>
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <polygon points="${area}" fill="rgba(26,77,140,0.10)"/>
+        <polyline points="${points}" fill="none" stroke="#1a4d8c" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  `;
+}
+
+/** Returns a heatmap colour for a utilisation %. */
+function heatColor(pct) {
+  // 0% = light blue, 50% = amber, 100% = deep red
+  if (pct < 25)  return '#94a3b8';        // grey-blue (low)
+  if (pct < 50)  return '#60a5fa';        // blue
+  if (pct < 70)  return '#10b981';        // green (healthy)
+  if (pct < 85)  return '#f59e0b';        // amber (high)
+  return '#ef4444';                       // red (saturation)
+}
+
+/** Re-renders just the analytics body (after view/date change). */
+async function refreshAnalyticsBody() {
+  analyticsState.loading = true;
+  const body = $('#analytics-body');
+  if (body) body.innerHTML = `<div class="analytics-loading">Loading data…</div>`;
+
+  const view = analyticsState.view;
+  const date = analyticsState.anchorDate;
+  const dates = dateRangeFor(view, date);
+  try {
+    analyticsState.rangeCases = await fetchCasesForRange(dates);
+  } catch (e) {
+    if (body) body.innerHTML = `<div class="analytics-loading" style="color:#b91c1c;">Failed to load analytics: ${escapeHtml(e.message)}</div>`;
+    analyticsState.loading = false;
+    return;
+  }
+  analyticsState.loading = false;
+
+  // Re-render the head label (range can change) AND body
+  const section = $('#ot-analytics');
+  if (section) section.outerHTML = renderOTAnalytics();
+  attachAnalyticsHandlers();
+}
+
+function attachAnalyticsHandlers() {
+  // Tab switching
+  $$('#ot-analytics [data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      analyticsState.view = btn.dataset.view;
+      refreshAnalyticsBody();
+    });
+  });
+  // Date picker
+  const dp = $('#analytics-date');
+  if (dp) {
+    dp.addEventListener('change', () => {
+      analyticsState.anchorDate = dp.value;
+      refreshAnalyticsBody();
+    });
+  }
 }
 
 /* =========================================================
