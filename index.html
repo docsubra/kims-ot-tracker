@@ -922,6 +922,8 @@ table.data tbody tr:hover { background: var(--surface-2); }
 .lobby-tile .stage-text {
   font-size: 18px;
   font-weight: 500;
+  line-height: 1.3;
+  word-spacing: 0.02em;
 }
 .lobby-tile .lobby-meta {
   margin-top: 10px;
@@ -1439,9 +1441,9 @@ const STAGES = [
   { id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Preparation underway',     color: 'stage-anaesthesia' },
   { id: 'prep_positioning',     label: 'Surgical Prep & Positioning',    lobby: 'Preparation underway',     color: 'stage-anaesthesia' },
   { id: 'surgery',              label: 'Surgery Started',                lobby: 'Surgery in progress',      color: 'stage-surgery' },
-  { id: 'completed',            label: 'Surgery Completed',              lobby: 'Surgery complete',         color: 'stage-completed' },
-  { id: 'emergence',            label: 'Emergence & Recovery',           lobby: 'Recovery preparation',     color: 'stage-completed' },
-  { id: 'pacu',                 label: 'In PACU',                        lobby: 'In Recovery (PACU)',       color: 'stage-pacu' },
+  { id: 'completed',            label: 'Surgery Completed',              lobby: 'Surgery complete — preparing for recovery',  color: 'stage-completed' },
+  { id: 'emergence',            label: 'Emergence & Recovery',           lobby: 'Surgery complete — preparing for recovery',  color: 'stage-completed' },
+  { id: 'pacu',                 label: 'In PACU',                        lobby: 'In Recovery',                                color: 'stage-pacu' },
   { id: 'discharged',           label: 'Shifted to Ward',                lobby: 'Moved to Ward',            color: 'stage-discharged' },
 ];
 const STAGE_BY_ID = Object.fromEntries(STAGES.map(s => [s.id, s]));
