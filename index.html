@@ -27,6 +27,7 @@
 
   /* Stage colors - meaningful, distinguishable, color-blind safe */
   --stage-registered: #6b7280;
+  --stage-called: #d97706;
   --stage-preop: #d97706;
   --stage-in-ot: #2563eb;
   --stage-anaesthesia: #7c3aed;
@@ -36,6 +37,7 @@
   --stage-discharged: #4b5563;
 
   --stage-registered-bg: #f3f4f6;
+  --stage-called-bg: #fef3c7;
   --stage-preop-bg: #fef3c7;
   --stage-in-ot-bg: #dbeafe;
   --stage-anaesthesia-bg: #ede9fe;
@@ -371,6 +373,70 @@ body {
 .case-actions .btn.move-btn:hover {
   background: #fef3c7;
 }
+
+/* "Send For Patient" — the ward-call action and its prominent displays */
+.case-actions .btn.callfor {
+  background: var(--stage-called);
+  color: white;
+  border: 1.5px solid var(--stage-called);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 5px 12px;
+}
+.case-actions .btn.callfor:hover { background: #b45309; }
+
+@keyframes calledPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.case-item.called {
+  border-left: 4px solid var(--stage-called);
+  background: #fffbeb;
+}
+.called-banner {
+  background: var(--stage-called);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 5px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  animation: calledPulse 1.6s ease-in-out infinite;
+}
+/* Reception Board TV — must be readable across the room */
+.board-tile-case.called {
+  background: rgba(217, 119, 6, 0.16);
+  border-radius: 8px;
+  padding: 8px !important;
+}
+.board-called-strip {
+  background: #d97706;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  animation: calledPulse 1.6s ease-in-out infinite;
+}
+
+/* Reception Board (dark theme): called-row prominence */
+.board-table tr.called td {
+  background: rgba(217, 119, 6, 0.22) !important;
+}
+.board-table tr.called.warn td {
+  background: rgba(220, 38, 38, 0.22) !important;
+}
+.stage-pill.called-pill {
+  background: #d97706;
+  color: white;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  animation: calledPulse 1.6s ease-in-out infinite;
+}
+tr.called.warn .stage-pill.called-pill { background: #dc2626; }
 
 /* Small pill showing this case was moved from another OT */
 .theatre-moved-pill {
@@ -1789,6 +1855,7 @@ const CONFIG = {
 // Both pathways then converge to 'discharged' (handover complete).
 const STAGES = [
   { id: 'registered',           label: 'Registered',                     lobby: 'In Preoperative Area',          color: 'stage-registered' },
+  { id: 'sent_for',             label: 'Patient Called',                 lobby: 'In Preoperative Area',          color: 'stage-called' },
   { id: 'preop',                label: 'In Pre-Op',                      lobby: 'In Preoperative Area',         color: 'stage-preop' },
   { id: 'in_ot',                label: 'In OT',                          lobby: 'Surgery in progress', color: 'stage-in-ot' },
   { id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
@@ -2222,10 +2289,20 @@ function renderCaseItem(c) {
   if (stage.id === 'preop' && since > 60 * 60 * 1000) elapsedClass = 'warn';
   if (stage.id === 'in_ot' && since > 30 * 60 * 1000) elapsedClass = 'warn';
   if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) elapsedClass = 'danger';
+  // Patient called from ward but not yet arrived — escalate visually
+  if (stage.id === 'sent_for' && since > 20 * 60 * 1000) elapsedClass = 'warn';
+  if (stage.id === 'sent_for' && since > 40 * 60 * 1000) elapsedClass = 'danger';
 
   // Advance button(s) — normally one, but AN ARRAY at emergence (PACU/ICU fork)
   let advanceBtns = '';
-  if (Array.isArray(next)) {
+  if (stage.id === 'registered') {
+    // Two paths from Registered: the normal "send for patient" ward call,
+    // or straight to Pre-Op for direct arrivals (day-care, emergencies).
+    advanceBtns = `
+      <button class="btn callfor sm" data-action="advance" data-case="${c.id}" data-stage="sent_for">📞 Send For Patient</button>
+      <button class="btn primary sm" data-action="advance" data-case="${c.id}" data-stage="preop">→ In Pre-Op</button>
+    `;
+  } else if (Array.isArray(next)) {
     // Fork: PACU vs ICU — two buttons side by side
     advanceBtns = next.map(n => `
       <button class="btn primary sm" data-action="advance" data-case="${c.id}" data-stage="${n.id}">
@@ -2249,8 +2326,10 @@ function renderCaseItem(c) {
     </div>`;
   }
 
+  const calledClass = stage.id === 'sent_for' ? ' called' : '';
   return `
-    <div class="case-item" data-case="${c.id}">
+    <div class="case-item${calledClass}" data-case="${c.id}">
+      ${stage.id === 'sent_for' ? `<div class="called-banner">📞 PATIENT CALLED FROM WARD · ${elapsed} ago${since > 20*60*1000 ? ' — NOT YET ARRIVED' : ''}</div>` : ''}
       <div class="case-header">
         <div>
           <div class="case-token">${escapeHtml(c.token || '')}${c.case_type === 'emergency' ? '<span class="case-type-badge">EMERG</span>' : ''}</div>
@@ -3067,8 +3146,10 @@ function renderBoardTile(theatre, cases) {
     const borderStyle = idx === 0 ? `border-left:4px solid var(--${stage.color});` : '';
     const sched = c.scheduled_time ? `<span class="scheduled-time-pill" style="margin-right:6px;">⏱ ${escapeHtml(c.scheduled_time)}</span>` : '';
     const emerg = c.case_type === 'emergency' ? `<span class="case-type-badge">EMERG</span>` : '';
+    const isCalled = stage.id === 'sent_for';
     return `
-      <div class="board-tile-case" style="${dimStyle} ${idx > 0 ? 'border-top:1px dashed var(--border); margin-top:8px; padding-top:8px;' : ''}">
+      <div class="board-tile-case${isCalled ? ' called' : ''}" style="${dimStyle} ${idx > 0 ? 'border-top:1px dashed var(--border); margin-top:8px; padding-top:8px;' : ''}">
+        ${isCalled ? `<div class="board-called-strip">📞 CALLED FROM WARD · ${fmtDuration(since)}${since > 20*60*1000 ? ' — AWAITING ARRIVAL' : ''}</div>` : ''}
         <div style="font-size:13px;">${sched}${escapeHtml(c.token || '')}${emerg}</div>
         <div class="occupant">${escapeHtml(c.patientName || '—')}</div>
         <div class="stage-line">
@@ -4738,6 +4819,8 @@ function renderBoardRowCase(theatre, c, isFirstForOT) {
     rowClass += ' completed';
   } else {
     rowClass += ' active-bar';
+    if (stage.id === 'sent_for') rowClass += ' called';
+    if (stage.id === 'sent_for' && since > 20 * 60 * 1000) rowClass += ' warn';
     if (stage.id === 'preop' && since > 60 * 60 * 1000) rowClass += ' warn';
     if (stage.id === 'in_ot' && since > 30 * 60 * 1000) rowClass += ' warn';
     if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) rowClass += ' danger';
@@ -4762,7 +4845,9 @@ function renderBoardRowCase(theatre, c, isFirstForOT) {
     <td class="col-procedure" title="${escapeHtml(c.procedure || c.specialty || '')}">${escapeHtml(c.procedure || c.specialty || '—')}</td>
     <td class="col-surgeon" title="${escapeHtml(c.surgeon || '')}">${escapeHtml(c.surgeon || '—')}</td>
     <td class="col-stage">
-      <span class="stage-pill" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span>
+      ${stage.id === 'sent_for'
+        ? `<span class="stage-pill called-pill">📞 PATIENT CALLED${since > 20*60*1000 ? ' · AWAITING' : ''}</span>`
+        : `<span class="stage-pill" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">${escapeHtml(stage.label)}</span>`}
     </td>
     <td class="col-elapsed">${since != null ? fmtDuration(since) : ''}</td>
   </tr>`;
