@@ -347,6 +347,44 @@ body {
 }
 .case-actions .btn { font-size: 11px; padding: 5px 9px; }
 
+/* Make the Edit button more prominent - it's used often for corrections */
+.case-actions .btn.edit-btn {
+  background: white;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  font-weight: 600;
+  padding: 5px 12px;
+  font-size: 12px;
+}
+.case-actions .btn.edit-btn:hover {
+  background: var(--primary-light);
+}
+/* Move OT button - amber tint to distinguish from edit */
+.case-actions .btn.move-btn {
+  background: white;
+  color: #b45309;
+  border: 1.5px solid #d97706;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 5px 10px;
+}
+.case-actions .btn.move-btn:hover {
+  background: #fef3c7;
+}
+
+/* Small pill showing this case was moved from another OT */
+.theatre-moved-pill {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  border-radius: 99px;
+  letter-spacing: 0.02em;
+}
+
 .elapsed {
   font-variant-numeric: tabular-nums;
   font-size: 11px;
@@ -1667,6 +1705,10 @@ const CONFIG = {
   // on the Apps Script side as a second layer.
   STAFF_PIN: '4321',
 
+  // PIN for the Admin Dashboard (analytics, KPIs, case table).
+  // CHANGE THIS before go-live if desired. Keep it different from STAFF_PIN.
+  ADMIN_PIN: '2468',
+
   // 15 theatres total: 13 general OTs + 2 OBG theatres.
   THEATRES: ['OT 1', 'OT 2', 'OT 3', 'OT 4', 'OT 5', 'OT 6', 'OT 7', 'OT 8',
              'OT 9', 'OT 10', 'OT 11', 'OT 12', 'OT 13', 'OBG 1', 'OBG 2'],
@@ -1686,20 +1728,29 @@ const CONFIG = {
 
 /* ---------- STAGES ---------- */
 // Stage order matters - it defines the patient's forward flow.
+// Note: After 'emergence', the flow FORKS. The patient goes to either:
+//   - 'pacu' (Post-Anaesthesia Care Unit) - the typical pathway
+//   - 'in_icu' (Intensive Care Unit) - for major surgeries, complex cases
+// Both pathways then converge to 'discharged' (handover complete).
 const STAGES = [
-  { id: 'registered',           label: 'Registered',                     lobby: 'Awaiting pre-op',          color: 'stage-registered' },
-  { id: 'preop',                label: 'In Pre-Op',                      lobby: 'In Pre-Operation',         color: 'stage-preop' },
-  { id: 'in_ot',                label: 'In OT',                          lobby: 'Moved to Operation Theatre', color: 'stage-in-ot' },
-  { id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Preparation underway',     color: 'stage-anaesthesia' },
-  { id: 'prep_positioning',     label: 'Surgical Prep & Positioning',    lobby: 'Preparation underway',     color: 'stage-anaesthesia' },
+  { id: 'registered',           label: 'Registered',                     lobby: 'In Preoperative Area',          color: 'stage-registered' },
+  { id: 'preop',                label: 'In Pre-Op',                      lobby: 'In Preoperative Area',         color: 'stage-preop' },
+  { id: 'in_ot',                label: 'In OT',                          lobby: 'Surgery in progress', color: 'stage-in-ot' },
+  { id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
+  { id: 'prep_positioning',     label: 'Surgical Prep & Positioning',    lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
   { id: 'surgery',              label: 'Surgery Started',                lobby: 'Surgery in progress',      color: 'stage-surgery' },
   { id: 'completed',            label: 'Surgery Completed',              lobby: 'Surgery complete — preparing for recovery',  color: 'stage-completed' },
   { id: 'emergence',            label: 'Emergence & Recovery',           lobby: 'Surgery complete — preparing for recovery',  color: 'stage-completed' },
-  { id: 'pacu',                 label: 'In PACU',                        lobby: 'In Recovery',                                color: 'stage-pacu' },
-  { id: 'discharged',           label: 'Shifted to Ward',                lobby: 'Moved to Ward',            color: 'stage-discharged' },
+  { id: 'pacu',                 label: 'In PACU',                        lobby: 'Shifted to Recovery (PACU)',              color: 'stage-pacu' },
+  { id: 'in_icu',               label: 'Shifted to ICU',                 lobby: 'Shifted to ICU',             color: 'stage-pacu' },
+  { id: 'discharged',           label: 'Shifted to Ward',                lobby: 'Shifted to Ward',            color: 'stage-discharged' },
 ];
 const STAGE_BY_ID = Object.fromEntries(STAGES.map(s => [s.id, s]));
 const STAGE_INDEX = Object.fromEntries(STAGES.map((s, i) => [s.id, i]));
+
+// Stages that are "sibling endpoints" after emergence.
+// The patient goes through exactly ONE of these, not both.
+const POST_EMERGENCE_SIBLINGS = ['pacu', 'in_icu'];
 
 const SPECIALTIES = [
   'General Surgery', 'Orthopaedics', 'Obstetrics & Gynaecology', 'Urology',
@@ -1708,9 +1759,13 @@ const SPECIALTIES = [
 ];
 
 /* ---------- STATE ---------- */
+// Unlock flags persist in localStorage so staff don't retype the PIN on
+// every page load (matches the pilot manual: "The phone will remember the PIN").
+// Clearing browser data resets them.
 const state = {
   view: null,           // 'staff' | 'admin' | 'lobby' | null (= role select)
-  pinUnlocked: false,
+  pinUnlocked: (function(){ try { return localStorage.getItem('orbit_staff_ok') === '1'; } catch(e) { return false; } })(),
+  adminUnlocked: (function(){ try { return localStorage.getItem('orbit_admin_ok') === '1'; } catch(e) { return false; } })(),
   cases: [],            // array of case objects from backend
   loading: false,
   lastFetch: null,
@@ -1829,7 +1884,17 @@ function normalizeCase(c) {
     const m = st.match(/T(\d{2}):(\d{2})/);
     if (m) st = `${m[1]}:${m[2]}`;
   }
-  return { ...c, scheduled_time: st || '', stages };
+  // Parse theatre_history JSON. Empty/missing → empty array.
+  let theatreHistory = [];
+  if (c.theatre_history) {
+    try {
+      const parsed = typeof c.theatre_history === 'string'
+        ? JSON.parse(c.theatre_history)
+        : c.theatre_history;
+      if (Array.isArray(parsed)) theatreHistory = parsed;
+    } catch (e) { theatreHistory = []; }
+  }
+  return { ...c, scheduled_time: st || '', stages, theatre_history: theatreHistory };
 }
 
 async function createCase(payload) {
@@ -1856,7 +1921,8 @@ async function deleteCase(caseId) {
 
 /* ---------- CASE HELPERS ---------- */
 function currentStage(c) {
-  // Find the latest stage that has a timestamp
+  // Find the latest stage that has a timestamp.
+  // The pacu/in_icu fork: whichever of the two has a timestamp is "current".
   let latest = STAGES[0];
   for (const s of STAGES) {
     if (c.stages[s.id]) latest = s;
@@ -1864,10 +1930,31 @@ function currentStage(c) {
   return latest;
 }
 
+/**
+ * Returns the next stage(s) available from the current stage.
+ * - For most stages, returns a single stage object.
+ * - After 'emergence', returns AN ARRAY of two choices: [pacu, in_icu].
+ * - After 'in_icu', returns null (case is complete — ICU takes over).
+ * - After 'pacu', returns 'discharged' (Ward).
+ * - After 'discharged', returns null (case complete).
+ */
 function nextStage(c) {
   const cur = currentStage(c);
+
+  // Special case: emergence → fork to PACU or ICU
+  if (cur.id === 'emergence') {
+    return [STAGE_BY_ID.pacu, STAGE_BY_ID.in_icu];
+  }
+  // Special case: in_icu is terminal — case is complete
+  if (cur.id === 'in_icu') return null;
+  // Special case: pacu → discharged (skip in_icu in the linear order)
+  if (cur.id === 'pacu') return STAGE_BY_ID.discharged;
+  // Everything else: next in linear order
   const idx = STAGE_INDEX[cur.id];
-  return STAGES[idx + 1] || null;
+  const nxt = STAGES[idx + 1];
+  // Skip in_icu in linear progression (only reached via the fork)
+  if (nxt && nxt.id === 'in_icu') return STAGES[idx + 2] || null;
+  return nxt || null;
 }
 
 function timeSinceStage(c, stageId) {
@@ -1881,7 +1968,10 @@ function totalDuration(c, fromStage, toStage) {
 }
 
 function isFinished(c) {
-  return !!(c.stages.discharged || c.stages.pacu);
+  // Case is "finished" from the OT team's perspective once the patient has
+  // been handed off to another team: PACU, ICU, or Ward. The OT team's
+  // active involvement is over at that point.
+  return !!(c.stages.discharged || c.stages.pacu || c.stages.in_icu);
 }
 
 function casesByTheatre() {
@@ -1901,8 +1991,9 @@ function casesByTheatre() {
 function render() {
   const root = $('#app');
   if (!state.view) { root.innerHTML = renderRoleSelect(); attachRoleHandlers(); return; }
-  if (state.view === 'staff' && !state.pinUnlocked) { root.innerHTML = renderPinLock(); attachPinHandlers(); return; }
+  if (state.view === 'staff' && !state.pinUnlocked) { root.innerHTML = renderPinLock('staff'); attachPinHandlers('staff'); return; }
   if (state.view === 'staff') { root.innerHTML = renderStaff(); attachStaffHandlers(); return; }
+  if (state.view === 'admin' && !state.adminUnlocked) { root.innerHTML = renderPinLock('admin'); attachPinHandlers('admin'); return; }
   if (state.view === 'admin') { root.innerHTML = renderAdmin(); attachAdminHandlers(); return; }
   if (state.view === 'lobby') { root.innerHTML = renderLobby(); attachLobbyHandlers(); return; }
   if (state.view === 'board') { root.innerHTML = renderBoard(); attachBoardHandlers(); return; }
@@ -1929,7 +2020,7 @@ function renderRoleSelect() {
             <div class="icon">📊</div>
             <div class="body">
               <div class="title">Admin Dashboard</div>
-              <div class="desc">Live theatre board, KPIs and analytics · HOD only</div>
+              <div class="desc">Live theatre board, KPIs and analytics · PIN required</div>
             </div>
           </button>
           <button class="role-option" data-role="lobby">
@@ -1957,7 +2048,11 @@ function attachRoleHandlers() {
     state.view = role;
     setUrlView(role);
     render();
-    if (role !== 'staff' || state.pinUnlocked) {
+    // Fetch data immediately only if the view doesn't need an unlock
+    // (or is already unlocked on this device).
+    const needsUnlock = (role === 'staff' && !state.pinUnlocked) ||
+                        (role === 'admin' && !state.adminUnlocked);
+    if (!needsUnlock) {
       fetchCases().then(render);
       startAutoRefresh();
     }
@@ -1965,14 +2060,21 @@ function attachRoleHandlers() {
 }
 
 /* =========================================================
-   PIN LOCK (staff)
+   PIN LOCK (staff and admin)
+   The unlock is remembered per device via localStorage, so the
+   PIN only needs to be entered once per phone/computer.
+   Note: this is an access gate for casual protection, not
+   cryptographic security — see roadmap for server-side auth.
    ========================================================= */
-function renderPinLock() {
+function renderPinLock(role = 'staff') {
+  const isAdmin = role === 'admin';
   return `
     <div class="pin-lock">
       <div class="pin-card">
-        <h2>Staff Access</h2>
-        <p>Enter the staff PIN to update patient stages.</p>
+        <h2>${isAdmin ? 'Admin Access' : 'Staff Access'}</h2>
+        <p>${isAdmin
+          ? 'Enter the admin PIN to view the dashboard and analytics.'
+          : 'Enter the staff PIN to update patient stages.'}</p>
         <div class="field">
           <input type="password" id="pin-input" class="pin-input" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••">
         </div>
@@ -1982,12 +2084,20 @@ function renderPinLock() {
     </div>
   `;
 }
-function attachPinHandlers() {
+function attachPinHandlers(role = 'staff') {
+  const isAdmin = role === 'admin';
   const input = $('#pin-input');
   input.focus();
   const submit = () => {
-    if (input.value === CONFIG.STAFF_PIN) {
-      state.pinUnlocked = true;
+    const expected = isAdmin ? CONFIG.ADMIN_PIN : CONFIG.STAFF_PIN;
+    if (input.value === expected) {
+      if (isAdmin) {
+        state.adminUnlocked = true;
+        try { localStorage.setItem('orbit_admin_ok', '1'); } catch(e) {}
+      } else {
+        state.pinUnlocked = true;
+        try { localStorage.setItem('orbit_staff_ok', '1'); } catch(e) {}
+      }
       render();
       fetchCases().then(render);
       startAutoRefresh();
@@ -2058,6 +2168,32 @@ function renderCaseItem(c) {
   if (stage.id === 'in_ot' && since > 30 * 60 * 1000) elapsedClass = 'warn';
   if (stage.id === 'surgery' && since > 3 * 60 * 60 * 1000) elapsedClass = 'danger';
 
+  // Advance button(s) — normally one, but AN ARRAY at emergence (PACU/ICU fork)
+  let advanceBtns = '';
+  if (Array.isArray(next)) {
+    // Fork: PACU vs ICU — two buttons side by side
+    advanceBtns = next.map(n => `
+      <button class="btn primary sm" data-action="advance" data-case="${c.id}" data-stage="${n.id}">
+        → ${escapeHtml(n.label)}
+      </button>
+    `).join('');
+  } else if (next) {
+    advanceBtns = `<button class="btn primary sm" data-action="advance" data-case="${c.id}" data-stage="${next.id}">→ ${escapeHtml(next.label)}</button>`;
+  } else {
+    advanceBtns = '<span class="elapsed">✓ Completed</span>';
+  }
+
+  // Theatre-moved indicator: show a small pill if this case has been moved
+  let movedFromPill = '';
+  if (c.theatre_history && Array.isArray(c.theatre_history) && c.theatre_history.length > 0) {
+    const last = c.theatre_history[c.theatre_history.length - 1];
+    const t = last.at ? new Date(last.at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+    const reason = last.reason ? ` (${last.reason})` : '';
+    movedFromPill = `<div class="theatre-moved-pill" title="Moved from ${escapeHtml(last.fromTheatre || '')} at ${escapeHtml(t)}${escapeHtml(reason)}">
+      ↔ moved from ${escapeHtml(last.fromTheatre || '')} at ${escapeHtml(t)}
+    </div>`;
+  }
+
   return `
     <div class="case-item" data-case="${c.id}">
       <div class="case-header">
@@ -2069,15 +2205,17 @@ function renderCaseItem(c) {
             ${escapeHtml(c.surgeon || 'Surgeon —')} · ${escapeHtml(c.procedure || c.specialty || '—')}<br>
             <span class="elapsed ${elapsedClass}">${escapeHtml(stage.label)} · ${elapsed}</span>
           </div>
+          ${movedFromPill}
         </div>
         <span class="stage-badge" style="background:var(--${stage.color}-bg); color:var(--${stage.color});">
           ${escapeHtml(stage.label)}
         </span>
       </div>
       <div class="case-actions">
-        ${next ? `<button class="btn primary sm" data-action="advance" data-case="${c.id}" data-stage="${next.id}">→ ${escapeHtml(next.label)}</button>` : '<span class="elapsed">✓ Completed</span>'}
+        ${advanceBtns}
         ${stage.id !== 'registered' ? `<button class="btn sm ghost" data-action="undo" data-case="${c.id}" data-stage="${stage.id}" title="Undo last stage advance">↶ Undo</button>` : ''}
-        <button class="btn sm" data-action="edit" data-case="${c.id}">Edit</button>
+        <button class="btn sm edit-btn" data-action="edit" data-case="${c.id}">✎ Edit</button>
+        <button class="btn sm move-btn" data-action="move-theatre" data-case="${c.id}" title="Move to a different OT">⇄ Move OT</button>
         <button class="btn ghost sm" data-action="delete" data-case="${c.id}">✕</button>
       </div>
     </div>
@@ -2121,6 +2259,11 @@ function attachStaffHandlers() {
   $$('[data-action="edit"]').forEach(b => b.addEventListener('click', () => {
     const c = state.cases.find(x => x.id === b.dataset.case);
     if (c) openCaseModal(c);
+  }));
+
+  $$('[data-action="move-theatre"]').forEach(b => b.addEventListener('click', () => {
+    const c = state.cases.find(x => x.id === b.dataset.case);
+    if (c) openMoveTheatreModal(c);
   }));
 
   $$('[data-action="delete"]').forEach(b => b.addEventListener('click', async () => {
@@ -2436,6 +2579,107 @@ function openCaseModal(existing = null) {
       toast('Failed: ' + e.message, 'error');
       saveBtn.disabled = false;
       saveBtn.textContent = isEdit ? 'Save changes' : 'Add case';
+    }
+  });
+}
+
+/**
+ * Opens the "Move to another OT" modal. Lets the user pick a new theatre
+ * and give a reason, then calls the moveTheatre API which logs the transfer
+ * to theatre_history for audit trail.
+ */
+function openMoveTheatreModal(c) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  const REASONS = [
+    'Previous case in current OT overran',
+    'Emergency case took over the current OT',
+    'Equipment issue in current OT',
+    'Surgeon requested a different OT',
+    'Better OT availability',
+    'Staffing / cover requirement',
+    'Other'
+  ];
+  const otherTheatres = CONFIG.THEATRES.filter(t => t !== c.theatre);
+  modal.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-head">
+        <h2>Move to another OT</h2>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px; color:var(--ink-2); margin-bottom:14px;">
+          Case <strong>${escapeHtml(c.token || '')}</strong> is currently in <strong>${escapeHtml(c.theatre || '—')}</strong>.
+        </p>
+        <div class="field">
+          <label>Move to</label>
+          <select id="move-theatre-select">
+            <option value="">— select OT —</option>
+            ${otherTheatres.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Reason</label>
+          <select id="move-reason-select">
+            <option value="">— select reason —</option>
+            ${REASONS.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" id="move-other-field" style="display:none;">
+          <label>Specify</label>
+          <input type="text" id="move-other-input" placeholder="Briefly describe the reason">
+        </div>
+        <p style="font-size:12px; color:var(--ink-3); margin-top:14px;">
+          The transfer will be logged in the audit trail. All case details, timestamps and history are preserved.
+        </p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" id="move-cancel">Cancel</button>
+        <button class="btn primary" id="move-confirm">Move case</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const reasonSel = $('#move-reason-select', modal);
+  const otherField = $('#move-other-field', modal);
+  const otherInput = $('#move-other-input', modal);
+
+  reasonSel.addEventListener('change', () => {
+    if (reasonSel.value === 'Other') {
+      otherField.style.display = '';
+      otherInput.focus();
+    } else {
+      otherField.style.display = 'none';
+    }
+  });
+
+  const cleanup = () => modal.remove();
+  $('#move-cancel', modal).addEventListener('click', cleanup);
+
+  $('#move-confirm', modal).addEventListener('click', async () => {
+    const toTheatre = $('#move-theatre-select', modal).value;
+    const reasonRaw = reasonSel.value;
+    if (!toTheatre) { toast('Please pick a theatre', 'error'); return; }
+    if (!reasonRaw)  { toast('Please pick a reason', 'error'); return; }
+    let reason = reasonRaw;
+    if (reasonRaw === 'Other') {
+      const t = otherInput.value.trim();
+      if (!t) { toast('Please describe the reason', 'error'); return; }
+      reason = t;
+    }
+    const btn = $('#move-confirm', modal);
+    btn.disabled = true;
+    btn.textContent = 'Moving…';
+    try {
+      await api('moveTheatre', { caseId: c.id, toTheatre, reason });
+      toast(`Case moved to ${toTheatre}`, 'success');
+      cleanup();
+      await fetchCases();
+      render();
+    } catch (e) {
+      toast('Failed to move: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Move case';
     }
   });
 }
@@ -3114,8 +3358,11 @@ function computeTurnover(cases) {
     for (let i = 1; i < inTheatre.length; i++) {
       const prev = inTheatre[i - 1];
       const next = inTheatre[i];
-      // Turnover = previous patient OUT (pacu or completed) -> next patient IN (in_ot)
-      const out = prev.stages.pacu || prev.stages.completed;
+      // Turnover = previous patient leaves OT room -> next patient enters OT.
+      // Patient leaves OT at 'emergence'; fall back to 'completed' or the
+      // handover-out stages (pacu/in_icu) if emergence wasn't recorded.
+      const out = prev.stages.emergence || prev.stages.completed ||
+                  prev.stages.pacu || prev.stages.in_icu;
       const inT = next.stages.in_ot;
       if (out && inT && inT > out) byTheatre[t].push(inT - out);
     }
@@ -3834,19 +4081,21 @@ function renderLobby() {
   const cutoff = now.getTime() - LOBBY_DISCHARGED_GRACE_MS;
 
   // Split today's cases into two groups:
-  // 1) Active — anything not yet discharged
-  // 2) Recently discharged — discharged within the last 3 hours
-  const activeCases = state.cases.filter(c => !c.stages.discharged);
+  // 1) Active — anything not yet handed over (no discharged AND no in_icu timestamp)
+  // 2) Recently transferred — reached Ward OR ICU within the grace window
+  const activeCases = state.cases.filter(c => !c.stages.discharged && !c.stages.in_icu);
+
+  // Return the timestamp when the patient was handed off (discharged or in_icu, whichever is set)
+  const handoverTime = (c) => {
+    const t = c.stages.discharged || c.stages.in_icu;
+    if (!t) return 0;
+    return t instanceof Date ? t.getTime() : new Date(t).getTime();
+  };
+
   const recentlyDischarged = state.cases.filter(c => {
-    if (!c.stages.discharged) return false;
-    const dt = c.stages.discharged instanceof Date ? c.stages.discharged.getTime() : new Date(c.stages.discharged).getTime();
-    return dt >= cutoff;
-  }).sort((a, b) => {
-    // Most recently discharged first
-    const aT = a.stages.discharged instanceof Date ? a.stages.discharged.getTime() : new Date(a.stages.discharged).getTime();
-    const bT = b.stages.discharged instanceof Date ? b.stages.discharged.getTime() : new Date(b.stages.discharged).getTime();
-    return bT - aT;
-  });
+    if (!c.stages.discharged && !c.stages.in_icu) return false;
+    return handoverTime(c) >= cutoff;
+  }).sort((a, b) => handoverTime(b) - handoverTime(a));  // most recent first
 
   return `
     <div class="lobby">
@@ -3871,16 +4120,16 @@ function renderLobby() {
                 ${activeCases.map(c => renderLobbyTile(c, false)).join('')}
               </div>
             ` : `
-              <div class="lobby-empty" style="font-size:22px; padding:40px 20px;">All current cases have been moved to ward</div>
+              <div class="lobby-empty" style="font-size:22px; padding:40px 20px;">All current cases have been transferred</div>
             `}
 
             ${recentlyDischarged.length > 0 ? `
               <div class="lobby-discharged-section">
                 <div class="lobby-discharged-head">
                   <div class="lobby-discharged-title">
-                    <span class="check">✓</span>Recently Moved to Ward
+                    <span class="check">✓</span>Recently Transferred
                   </div>
-                  <div class="lobby-discharged-sub">Shown for ${LOBBY_DISCHARGED_GRACE_MS / 3600000} hours after transfer · ${recentlyDischarged.length} ${recentlyDischarged.length === 1 ? 'patient' : 'patients'}</div>
+                  <div class="lobby-discharged-sub">Shown for ${LOBBY_DISCHARGED_GRACE_MS / 3600000} hours · ${recentlyDischarged.length} ${recentlyDischarged.length === 1 ? 'patient' : 'patients'}</div>
                 </div>
                 <div class="lobby-discharged-grid">
                   ${recentlyDischarged.map(c => renderLobbyTile(c, true)).join('')}
@@ -3909,11 +4158,18 @@ function renderLobbyTile(c, isDischarged) {
   const dur = c.expected_duration_min;
   const durLabel = dur ? formatExpectedDuration(dur) : '';
 
-  // For discharged tiles, override the display with a calm "Moved to ward" message
-  // and show the time of transfer rather than the elapsed time in the stage.
+  // For discharged tiles (in the "Recently Transferred" section), show the
+  // destination-aware message and the exact transfer time. ICU cases use
+  // 'Moved to ICU'; PACU→Ward cases use 'Moved to Ward'.
   if (isDischarged) {
-    const dt = c.stages.discharged instanceof Date ? c.stages.discharged : new Date(c.stages.discharged);
+    // Determine destination based on which timestamp is set.
+    // in_icu is terminal (patient went straight to ICU from OT).
+    // discharged means the patient reached the Ward.
+    const isICU = !!c.stages.in_icu && !c.stages.discharged;
+    const stageTime = isICU ? c.stages.in_icu : c.stages.discharged;
+    const dt = stageTime instanceof Date ? stageTime : new Date(stageTime);
     const timeStr = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const destLabel = isICU ? 'Shifted to ICU' : 'Shifted to Ward';
     return `
       <div class="lobby-tile discharged" data-token="${escapeHtml(c.token)}">
         <div class="token-row">
@@ -3923,7 +4179,7 @@ function renderLobbyTile(c, isDischarged) {
         <div class="surgeon">${escapeHtml(c.surgeon ? 'Surgeon: ' + c.surgeon : 'Surgical team')}</div>
         <div class="status-row">
           <div class="stage-dot"></div>
-          <div class="stage-text">Moved to Ward</div>
+          <div class="stage-text">${escapeHtml(destLabel)}</div>
         </div>
         <div class="lobby-meta">
           <span class="discharge-time">Transferred at ${escapeHtml(timeStr)}</span>
@@ -3986,7 +4242,7 @@ let lobbyClockTimer = null;
    thank them.
    ========================================================= */
 
-const SPLASH_INTERVAL_MS = 5 * 60 * 1000;   // every 5 minutes
+const SPLASH_INTERVAL_MS = 15 * 60 * 1000;  // every 15 minutes
 const SPLASH_SLIDE_MS = 12 * 1000;          // each slide shown for 12s
 
 const SPLASH_SLIDES = [
@@ -4005,12 +4261,11 @@ const SPLASH_SLIDES = [
     eyebrow: 'UNDERSTANDING THE SCREEN',
     title: 'What you\'ll see',
     stages: [
-      { name: 'In Pre-Op',          desc: 'Final checks before surgery' },
-      { name: 'In OT',              desc: 'In the theatre, preparation underway' },
-      { name: 'Surgery in progress', desc: 'The operation is happening' },
-      { name: 'Preparing for recovery', desc: 'Surgery done, careful next steps' },
-      { name: 'In Recovery',        desc: 'Being monitored before the ward' },
-      { name: 'Moved to Ward',      desc: 'Safely transferred to rest' }
+      { name: 'In Preoperative Area',  desc: 'Final checks before surgery' },
+      { name: 'Surgery in progress',   desc: 'The operation is underway' },
+      { name: 'Surgery complete',      desc: 'Careful preparations for recovery' },
+      { name: 'Shifted to Recovery',   desc: 'Being monitored (PACU or ICU)' },
+      { name: 'Shifted to Ward',       desc: 'Safely transferred to rest' }
     ]
   },
   {
@@ -4312,7 +4567,12 @@ function attachTopbarHandlers() {
   });
   $('#switch-view-btn')?.addEventListener('click', () => {
     state.view = null;
-    state.pinUnlocked = false;
+    // Re-read unlock state from localStorage rather than clearing it —
+    // the PIN is remembered per device (as promised in the pilot manual).
+    try {
+      state.pinUnlocked = localStorage.getItem('orbit_staff_ok') === '1';
+      state.adminUnlocked = localStorage.getItem('orbit_admin_ok') === '1';
+    } catch(e) {}
     setUrlView(null);
     stopAutoRefresh();
     render();
@@ -4373,7 +4633,9 @@ function flashUpdated() {
 async function start() {
   state.view = getViewFromUrl();
   render();
-  if (state.view && (state.view !== 'staff' || state.pinUnlocked)) {
+  const needsUnlock = (state.view === 'staff' && !state.pinUnlocked) ||
+                      (state.view === 'admin' && !state.adminUnlocked);
+  if (state.view && !needsUnlock) {
     await fetchCases();
     render();
     startAutoRefresh();
