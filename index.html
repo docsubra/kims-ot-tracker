@@ -1814,6 +1814,104 @@ table.data tbody tr:hover { background: var(--surface-2); }
   margin-bottom: 8px;
   opacity: 0.5;
 }
+
+/* =========================================================
+   TV DISPLAYS — LIGHT THEME (v2.0)
+   Rationale: hospital corridors are brightly lit; dark navy
+   washes out on consumer TV panels (glare, gradient banding).
+   Light canvas + white cards = maximum clarity at distance.
+   Brand: off-white canvas, navy typography, gold accents.
+   The welcome splash deliberately remains dark navy + gold —
+   a cinematic full-screen interlude.
+   These overrides come AFTER the base rules and win the cascade.
+   ========================================================= */
+
+/* ---- Reception Board ---- */
+.board {
+  background: #eef2f7;
+  color: #14213d;
+}
+.board-head { border-bottom: 2px solid #dbe3ee; }
+.board-head h1 { color: #14213d; }
+.board-head .sub { color: #5b6b82; opacity: 1; }
+.board-clock .time { color: #14213d; }
+.board-clock .date { color: #5b6b82; opacity: 1; }
+.board-table-wrap {
+  background: white;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(20, 33, 61, 0.07);
+  overflow: hidden;
+}
+.board-table thead th {
+  background: #14213d;
+  color: rgba(255,255,255,0.92);
+  border-bottom: none;
+}
+.board-table td {
+  color: #1e293b;
+  border-bottom: 1px solid #edf1f7;
+  background: transparent;
+}
+.board-table .col-ot { color: #14213d; }
+.board-table .col-ot-cont { color: #94a3b8; }
+.board-table .col-patient { color: #0f172a; }
+.board-table .col-procedure, .board-table .col-surgeon { color: #475569; }
+.board-table tr.completed td { color: #94a3b8; }
+.board-table tr.completed .col-patient { color: #94a3b8; }
+/* Soft status tints — these read correctly on light backgrounds */
+.board-table tr.warn td { background: #fff7e6 !important; }
+.board-table tr.danger td { background: #fdecec !important; }
+.board-table tr.called td { background: #fdf6e0 !important; }
+.board-table tr.called td:first-child { border-left: 4px solid #F6B100 !important; }
+.board-table tr.called.warn td { background: #fdecec !important; }
+.board-table tr.called.warn td:first-child { border-left: 4px solid #dc2626 !important; }
+.board-foot { color: #5b6b82; opacity: 1; border-top: 1px solid #dbe3ee; }
+.board-legend { color: #5b6b82; }
+
+/* ---- Patient Lobby ---- */
+.lobby {
+  background: #eef2f7;
+  color: #14213d;
+}
+.lobby-head h1 { color: #14213d; }
+.lobby-head .sub { color: #5b6b82; opacity: 1; }
+.lobby-clock .time { color: #14213d; }
+.lobby-clock .date { color: #5b6b82; opacity: 1; }
+.lobby-tile {
+  background: white;
+  border: 1px solid #dbe3ee;
+  box-shadow: 0 6px 20px rgba(20, 33, 61, 0.06);
+}
+.lobby-tile .token { color: #14213d; }
+.lobby-tile .ot-tag { background: #eef2f7; color: #14213d; }
+.lobby-tile .surgeon { color: #5b6b82; }
+.lobby-tile .stage-text { color: #1e293b; }
+.lobby-tile .lobby-meta { color: #64748b; }
+.lobby-tile .duration-pill { background: #eef2f7; color: #475569; }
+.lobby-empty { color: #94a3b8; opacity: 1; }
+
+/* Recently Transferred — soft green cards on light */
+.lobby-discharged-section { border-top: 2px solid #dbe3ee; }
+.lobby-discharged-title { color: #14213d; }
+.lobby-discharged-sub { color: #64748b; }
+.lobby-tile.discharged {
+  background: #f0fbf6;
+  border-color: #bfe8d2;
+}
+.lobby-tile.discharged .token { color: #14213d; }
+.lobby-tile.discharged .ot-tag { background: #d9f2e4; color: #0b6e4f; }
+.lobby-tile.discharged .stage-text { color: #0b6e4f; }
+.lobby-tile.discharged .stage-dot { background: #059669 !important; box-shadow: 0 0 8px rgba(5,150,105,0.45); }
+.lobby-tile.discharged .discharge-time { color: #059669; }
+
+/* Lobby footer */
+.lobby-foot { border-top: 1px solid #dbe3ee; }
+.lobby-foot .privacy-block { color: #5b6b82; }
+.lobby-foot .privacy-block .privacy-strong { color: #14213d; }
+.lobby-foot .refresh-block { color: #94a3b8; }
+
+
 </style>
 </head>
 <body>
@@ -4806,7 +4904,7 @@ function renderBoard() {
           <span><span class="swatch" style="background:#F6B100;"></span>Patient called</span>
           <span><span class="swatch" style="background:#ef4444;"></span>Delayed / awaiting</span>
         </div>
-        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Day resets at midnight IST</div>
+        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Working day resets at 7 AM IST</div>
       </div>
     </div>
   `;
@@ -4846,7 +4944,7 @@ function renderBoardRowCase(theatre, c, isFirstForOT) {
 
   // Token cell: show scheduled time or EMERG above the token
   const schedLine = c.case_type === 'emergency'
-    ? `<div style="font-size:10px; font-weight:700; color:#fca5a5; letter-spacing:0.05em;">EMERG</div>`
+    ? `<div style="font-size:10px; font-weight:700; color:#dc2626; letter-spacing:0.05em;">EMERG</div>`
     : (c.scheduled_time ? `<div style="font-size:11px; opacity:0.7; font-variant-numeric:tabular-nums;">⏱ ${escapeHtml(c.scheduled_time)}</div>` : '');
 
   return `<tr class="${rowClass}">
