@@ -1829,8 +1829,8 @@ table.data tbody tr:hover { background: var(--surface-2); }
 /* KIMS Hospitals brand palette — adjust these two values to match
    the logo exactly if the shade differs on your letterhead. */
 .board, .lobby {
-  --kims-primary: #4C1D95;   /* KIMS deep violet — rich and authoritative */
-  --kims-accent:  #F26B21;   /* KIMS warm orange (petal motif) */
+  --kims-primary: #197AA7;   /* KIMS teal-blue — exact, from the logo SVG */
+  --kims-accent:  #E41B47;   /* KIMS crimson (petal motif) — alerts only */
 }
 
 /* ---- Reception Board ---- */
@@ -1875,10 +1875,10 @@ table.data tbody tr:hover { background: var(--surface-2); }
 /* Soft status tints — these read correctly on light backgrounds */
 .board-table tr.warn td { background: #fff7e6 !important; }
 .board-table tr.danger td { background: #fdecec !important; }
-.board-table tr.called td { background: #fdefe5 !important; }
-.board-table tr.called td:first-child { border-left: 4px solid var(--kims-accent) !important; }
+.board-table tr.called td { background: #fdf6e0 !important; }
+.board-table tr.called td:first-child { border-left: 4px solid #F6B100 !important; }
 .board-table tr.called.warn td { background: #fdecec !important; }
-.board-table tr.called.warn td:first-child { border-left: 4px solid #dc2626 !important; }
+.board-table tr.called.warn td:first-child { border-left: 4px solid var(--kims-accent) !important; }
 .board-foot { color: #5b6b82; opacity: 1; border-top: 1px solid #dbe3ee; }
 .board-legend { color: #5b6b82; }
 
@@ -1926,19 +1926,19 @@ table.data tbody tr:hover { background: var(--surface-2); }
 
 /* ---- "Patient Called" elements re-pointed to the KIMS accent ---- */
 .stage-pill.called-pill {
-  background: #F26B21;
-  color: white;
+  background: #F6B100;
+  color: #0a1424;
 }
-.stage-pill.called-pill.overdue { background: #dc2626; }
+.stage-pill.called-pill.overdue { background: var(--kims-accent, #E41B47); color: white; }
 .case-actions .btn.callfor {
-  background: #F26B21;
-  color: white;
-  border-color: #F26B21;
+  background: #F6B100;
+  color: #0a1424;
+  border-color: #F6B100;
 }
-.case-actions .btn.callfor:hover { background: #d95a15; border-color: #d95a15; }
-.called-banner { background: #F26B21; color: white; }
-.case-item.called { border-left-color: #F26B21; }
-.board-called-strip { background: #F26B21; color: white; }
+.case-actions .btn.callfor:hover { background: #d99e00; border-color: #d99e00; }
+.called-banner { background: #F6B100; color: #0a1424; }
+.case-item.called { border-left-color: #F6B100; }
+.board-called-strip { background: #F6B100; color: #0a1424; }
 
 
 </style>
@@ -1993,7 +1993,7 @@ const CONFIG = {
 // Both pathways then converge to 'discharged' (handover complete).
 const STAGES = [
   { tv: '#94a3b8', id: 'registered',           label: 'Registered',                     lobby: 'In Preoperative Area',          color: 'stage-registered' },
-  { tv: '#F26B21', id: 'sent_for',             label: 'Patient Called',                 lobby: 'In Preoperative Area',          color: 'stage-called' },
+  { tv: '#F6B100', id: 'sent_for',             label: 'Patient Called',                 lobby: 'In Preoperative Area',          color: 'stage-called' },
   { tv: '#22d3ee', id: 'preop',                label: 'In Pre-Op',                      lobby: 'In Preoperative Area',         color: 'stage-preop' },
   { tv: '#60a5fa', id: 'in_ot',                label: 'In OT',                          lobby: 'Surgery in progress', color: 'stage-in-ot' },
   { tv: '#a78bfa', id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
@@ -2025,7 +2025,7 @@ const SPECIALTIES = [
    which may hold a half-filled form) re-fetches the page every
    10 minutes with cache bypassed and reloads if the deployed
    BUILD_VERSION differs from the running one. */
-const BUILD_VERSION = '2.2.0';
+const BUILD_VERSION = '2.3.0';
 let tvUpdateCheckerStarted = false;
 function startTvAutoUpdate() {
   if (tvUpdateCheckerStarted) return;
