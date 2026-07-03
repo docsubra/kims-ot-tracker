@@ -1829,13 +1829,13 @@ table.data tbody tr:hover { background: var(--surface-2); }
 /* KIMS Hospitals brand palette — adjust these two values to match
    the logo exactly if the shade differs on your letterhead. */
 .board, .lobby {
-  --kims-primary: #5B2D86;   /* KIMS deep violet (wordmark) */
+  --kims-primary: #4C1D95;   /* KIMS deep violet — rich and authoritative */
   --kims-accent:  #F26B21;   /* KIMS warm orange (petal motif) */
 }
 
 /* ---- Reception Board ---- */
 .board {
-  background: #f6f4fa;       /* whisper-light violet tint of the brand */
+  background: #f1f5f9;       /* cool light grey — neutral, low glare */
   color: #14213d;
 }
 .board-head { border-bottom: 2px solid #dbe3ee; }
@@ -1864,8 +1864,14 @@ table.data tbody tr:hover { background: var(--surface-2); }
 .board-table .col-ot-cont { color: #94a3b8; }
 .board-table .col-patient { color: #0f172a; }
 .board-table .col-procedure, .board-table .col-surgeon { color: #475569; }
-.board-table tr.completed td { color: #94a3b8; }
-.board-table tr.completed .col-patient { color: #94a3b8; }
+/* Completed cases stay fully readable on the light theme — the green
+   chip and a subtle tint signal "done"; no transparency (the old dark-
+   theme opacity dim made rows illegible on white). */
+.board-table tbody tr.completed { opacity: 1; }
+.board-table tr.completed td { color: #334155; background: #f7f9fb; }
+.board-table tr.completed .col-patient { color: #334155; }
+.board-table tr.completed .col-procedure,
+.board-table tr.completed .col-surgeon { color: #64748b; }
 /* Soft status tints — these read correctly on light backgrounds */
 .board-table tr.warn td { background: #fff7e6 !important; }
 .board-table tr.danger td { background: #fdecec !important; }
@@ -1878,7 +1884,7 @@ table.data tbody tr:hover { background: var(--surface-2); }
 
 /* ---- Patient Lobby ---- */
 .lobby {
-  background: #f6f4fa;
+  background: #f1f5f9;
   color: #14213d;
 }
 .lobby-head h1 { color: var(--kims-primary); }
@@ -1997,7 +2003,7 @@ const STAGES = [
   { tv: '#34d399', id: 'emergence',            label: 'Emergence & Recovery',           lobby: 'Surgery complete — preparing for recovery',  color: 'stage-completed' },
   { tv: '#2dd4bf', id: 'pacu',                 label: 'In PACU',                        lobby: 'Shifted to Recovery (PACU)',              color: 'stage-pacu' },
   { tv: '#2dd4bf', id: 'in_icu',               label: 'Shifted to ICU',                 lobby: 'Shifted to ICU',             color: 'stage-pacu' },
-  { tv: '#94a3b8', id: 'discharged',           label: 'Shifted to Ward',                lobby: 'Shifted to Ward',            color: 'stage-discharged' },
+  { tv: '#34d399', id: 'discharged',           label: 'Shifted to Ward',                lobby: 'Shifted to Ward',            color: 'stage-discharged' },
 ];
 const STAGE_BY_ID = Object.fromEntries(STAGES.map(s => [s.id, s]));
 const STAGE_INDEX = Object.fromEntries(STAGES.map((s, i) => [s.id, i]));
@@ -2019,7 +2025,7 @@ const SPECIALTIES = [
    which may hold a half-filled form) re-fetches the page every
    10 minutes with cache bypassed and reloads if the deployed
    BUILD_VERSION differs from the running one. */
-const BUILD_VERSION = '2.1.0';
+const BUILD_VERSION = '2.2.0';
 let tvUpdateCheckerStarted = false;
 function startTvAutoUpdate() {
   if (tvUpdateCheckerStarted) return;
