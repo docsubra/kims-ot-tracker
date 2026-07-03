@@ -770,6 +770,61 @@ body {
   font-size: 13px;
 }
 
+/* Calendar heatmap (Trends view) */
+.cal-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: white;
+  padding: 10px 12px;
+}
+.cal-heatmap {
+  border-collapse: separate;
+  border-spacing: 3px;
+  min-width: 740px;
+}
+.cal-heatmap th.cal-daynum {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-align: center;
+  padding-bottom: 2px;
+  min-width: 18px;
+}
+.cal-heatmap td.cal-month {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  padding-right: 10px;
+  white-space: nowrap;
+  font-family: 'Fraunces', serif;
+}
+.cal-heatmap td.cal-cell {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.cal-heatmap td.cal-cell:hover { transform: scale(1.25); }
+.cal-heatmap td.cal-empty {
+  background: #e2e8f0;
+  cursor: default;
+}
+.cal-heatmap td.cal-empty:hover { transform: none; }
+.cal-heatmap td.cal-void { background: transparent; cursor: default; }
+.cal-heatmap td.cal-void:hover { transform: none; }
+.cal-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink-3);
+  flex-wrap: wrap;
+}
+.cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.cal-legend .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
 
 .kpi-row {
   display: grid;
@@ -3378,10 +3433,11 @@ function computeTurnover(cases) {
 
 // State for the analytics panel — current view (day/week/month) and date
 const analyticsState = {
-  view: 'day',         // 'day' | 'week' | 'month'
+  view: 'day',         // 'day' | 'week' | 'month' | 'trends'
   anchorDate: null,    // YYYY-MM-DD — the date the user is centred on
   loading: false,
-  rangeCases: []       // cases for the current range (fetched on demand)
+  rangeCases: [],      // cases for the current range (fetched on demand)
+  summaries: []        // pre-computed daily summaries (Trends view)
 };
 
 /**
@@ -3566,6 +3622,7 @@ function renderOTAnalytics() {
   const view = analyticsState.view;
   const date = analyticsState.anchorDate || todayISO();
   const rangeLabel = (() => {
+    if (view === 'trends') return 'Complete history · pre-computed nightly after the 7 AM rollover';
     if (view === 'day') return new Date(date + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const dates = dateRangeFor(view, date);
     const first = new Date(dates[0] + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
@@ -3585,6 +3642,7 @@ function renderOTAnalytics() {
             <button class="${view === 'day' ? 'active' : ''}" data-view="day">Day</button>
             <button class="${view === 'week' ? 'active' : ''}" data-view="week">Week</button>
             <button class="${view === 'month' ? 'active' : ''}" data-view="month">Month</button>
+            <button class="${view === 'trends' ? 'active' : ''}" data-view="trends">Trends</button>
           </div>
           <input type="date" id="analytics-date" value="${date}" max="${todayISO()}">
         </div>
@@ -3601,9 +3659,10 @@ function renderOTAnalytics() {
 }
 
 function renderAnalyticsView(view, anchorDate, rangeCases) {
-  if (view === 'day')   return renderAnalyticsDay(anchorDate, rangeCases);
-  if (view === 'week')  return renderAnalyticsWeek(anchorDate, rangeCases);
-  if (view === 'month') return renderAnalyticsMonth(anchorDate, rangeCases);
+  if (view === 'day')    return renderAnalyticsDay(anchorDate, rangeCases);
+  if (view === 'week')   return renderAnalyticsWeek(anchorDate, rangeCases);
+  if (view === 'month')  return renderAnalyticsMonth(anchorDate, rangeCases);
+  if (view === 'trends') return renderAnalyticsTrends(analyticsState.summaries);
   return '';
 }
 
@@ -3993,6 +4052,177 @@ function renderAnalyticsMonth(dateStr, rangeCases) {
   `;
 }
 
+/* ----- TRENDS VIEW (long-range, reads pre-computed DailySummary) ----- */
+function renderAnalyticsTrends(summaries) {
+  const days = (summaries || [])
+    .filter(s => String(s.theatre) === 'ALL')
+    .map(s => ({
+      date: String(s.date),
+      cases: Number(s.cases) || 0,
+      util: Number(s.utilisation_pct) || 0,
+      turnover: Number(s.avg_turnover_min) || 0,
+      overtime: Number(s.overtime_min) || 0,
+      icu: Number(s.to_icu) || 0,
+      ward: Number(s.to_ward) || 0,
+      firstStart: String(s.first_start || '')
+    }))
+    .sort((a, b) => a.date < b.date ? -1 : 1);
+
+  if (days.length === 0) {
+    return `<div class="analytics-loading">
+      No summary data yet.<br><br>
+      <span style="font-size:12px;">One-time setup in the Apps Script editor:<br>
+      1. Run <b>setupDailyTrigger()</b> — installs the nightly summariser<br>
+      2. Run <b>backfillSummaries()</b> — summarises all past days<br>
+      Data appears here from the next refresh onwards.</span>
+    </div>`;
+  }
+
+  // ---- Headline KPIs across the full history ----
+  const totalCases = days.reduce((s, d) => s + d.cases, 0);
+  const activeDays = days.filter(d => d.cases > 0).length;
+  const utils = days.filter(d => d.cases > 0).map(d => d.util);
+  const avgUtil = utils.length ? utils.reduce((s, v) => s + v, 0) / utils.length : 0;
+  const turns = days.filter(d => d.turnover > 0).map(d => d.turnover);
+  const avgTurn = turns.length ? Math.round(turns.reduce((s, v) => s + v, 0) / turns.length) : 0;
+  const totalOvertimeMin = days.reduce((s, d) => s + d.overtime, 0);
+  const icuTotal = days.reduce((s, d) => s + d.icu, 0);
+  const icuRate = totalCases > 0 ? (icuTotal / totalCases) * 100 : 0;
+  const firstDate = new Date(days[0].date + 'T12:00:00');
+  const lastDate = new Date(days[days.length - 1].date + 'T12:00:00');
+  const spanLabel = firstDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    + ' → ' + lastDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  // ---- Monthly aggregation ----
+  const byMonth = {};
+  days.forEach(d => {
+    const m = d.date.slice(0, 7);
+    (byMonth[m] = byMonth[m] || []).push(d);
+  });
+  const months = Object.keys(byMonth).sort();
+  const monthLabel = (m) => new Date(m + '-15T12:00:00').toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+
+  // ---- Calendar heatmap: months (rows) x day-of-month (columns) ----
+  const dayIndex = Object.fromEntries(days.map(d => [d.date, d]));
+  const calRows = months.map(m => {
+    const [y, mo] = m.split('-').map(Number);
+    const daysInMonth = new Date(y, mo, 0).getDate();
+    let cells = '';
+    for (let dnum = 1; dnum <= 31; dnum++) {
+      if (dnum > daysInMonth) { cells += '<td class="cal-cell cal-void"></td>'; continue; }
+      const ds = m + '-' + String(dnum).padStart(2, '0');
+      const rec = dayIndex[ds];
+      if (!rec || rec.cases === 0) {
+        cells += `<td class="cal-cell cal-empty" title="${ds} · no cases"></td>`;
+      } else {
+        cells += `<td class="cal-cell" data-cal-date="${ds}" style="background:${heatColor(rec.util)};" title="${ds} · ${rec.cases} cases · ${rec.util.toFixed(0)}% utilisation · click to review"></td>`;
+      }
+    }
+    return `<tr><td class="cal-month">${escapeHtml(monthLabel(m))}</td>${cells}</tr>`;
+  }).join('');
+
+  const dayHeader = Array.from({ length: 31 }, (_, i) =>
+    `<th class="cal-daynum">${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ''}</th>`).join('');
+
+  // ---- Monthly summary table ----
+  const monthRows = months.slice().reverse().map(m => {
+    const list = byMonth[m];
+    const mc = list.reduce((s, d) => s + d.cases, 0);
+    const mu = (() => { const u = list.filter(d => d.cases > 0).map(d => d.util); return u.length ? u.reduce((s, v) => s + v, 0) / u.length : 0; })();
+    const mt = (() => { const t = list.filter(d => d.turnover > 0).map(d => d.turnover); return t.length ? Math.round(t.reduce((s, v) => s + v, 0) / t.length) : 0; })();
+    const mo2 = list.reduce((s, d) => s + d.overtime, 0);
+    const mi = list.reduce((s, d) => s + d.icu, 0);
+    const utilClass = mu >= 80 ? 'high' : (mu >= 50 ? 'med' : 'low');
+    return `
+      <tr>
+        <td class="ot-name">${escapeHtml(monthLabel(m))}</td>
+        <td>${mc}</td>
+        <td>${list.filter(d => d.cases > 0).length}</td>
+        <td>${mt ? mt + 'm' : '—'}</td>
+        <td>${mo2 > 0 ? fmtHm(mo2 * 60000) : '—'}</td>
+        <td>${mi || '—'}</td>
+        <td>
+          <div class="util-bar-wrap">
+            <div class="util-bar"><div class="util-bar-fill ${utilClass}" style="width:${mu.toFixed(0)}%"></div></div>
+            <span class="util-pct">${mu.toFixed(0)}%</span>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <div class="analytics-summary">
+      <div class="kpi-mini">
+        <div class="label">Total cases</div>
+        <div class="value">${totalCases}</div>
+        <div class="sub">${activeDays} active days · ${escapeHtml(spanLabel)}</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg utilisation</div>
+        <div class="value">${avgUtil.toFixed(0)}%</div>
+        <div class="sub">${String(CONFIG.OT_DAY_START_HOUR).padStart(2,'0')}:00–${String(CONFIG.OT_DAY_END_HOUR).padStart(2,'0')}:00 window</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Avg turnover</div>
+        <div class="value">${avgTurn ? avgTurn + 'm' : '—'}</div>
+        <div class="sub">Across all recorded days</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Total overtime</div>
+        <div class="value">${fmtHm(totalOvertimeMin * 60000)}</div>
+        <div class="sub">Outside working hours</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="label">Direct-to-ICU</div>
+        <div class="value">${icuTotal}<span style="font-size:14px; color:var(--ink-3); font-weight:400;"> (${icuRate.toFixed(1)}%)</span></div>
+        <div class="sub">Of all cases</div>
+      </div>
+    </div>
+
+    <div class="heatmap-section">
+      <h4>Daily Utilisation Calendar · click any day to open its full review</h4>
+      <div class="cal-wrap">
+        <table class="cal-heatmap">
+          <thead><tr><th></th>${dayHeader}</tr></thead>
+          <tbody>${calRows}</tbody>
+        </table>
+      </div>
+      <div class="cal-legend">
+        <span><span class="swatch" style="background:#94a3b8;"></span>&lt;25%</span>
+        <span><span class="swatch" style="background:#60a5fa;"></span>25–50%</span>
+        <span><span class="swatch" style="background:#10b981;"></span>50–70%</span>
+        <span><span class="swatch" style="background:#f59e0b;"></span>70–85%</span>
+        <span><span class="swatch" style="background:#ef4444;"></span>≥85%</span>
+        <span><span class="swatch" style="background:#e2e8f0; border:1px solid #cbd5e1;"></span>No cases</span>
+      </div>
+    </div>
+
+    <div class="trend-section">
+      <div class="trend-grid">
+        ${renderTrendCard('Utilisation % (all days)', days.map(d => d.util), '%', avgUtil.toFixed(0) + '%')}
+        ${renderTrendCard('Cases per day (all days)', days.map(d => d.cases), '', activeDays ? (totalCases / activeDays).toFixed(1) : '0')}
+      </div>
+    </div>
+
+    <div style="overflow-x:auto; margin-top:20px;">
+      <table class="ot-analytics-table">
+        <thead>
+          <tr>
+            <th style="width:110px;">Month</th>
+            <th style="width:70px;">Cases</th>
+            <th style="width:90px;">Active days</th>
+            <th style="width:100px;">Avg turnover</th>
+            <th style="width:100px;">Overtime</th>
+            <th style="width:90px;">To ICU</th>
+            <th>Avg utilisation</th>
+          </tr>
+        </thead>
+        <tbody>${monthRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 /** Simple inline SVG sparkline trend card */
 function renderTrendCard(label, values, unit, summaryText) {
   const max = Math.max(1, ...values);
@@ -4034,9 +4264,15 @@ async function refreshAnalyticsBody() {
 
   const view = analyticsState.view;
   const date = analyticsState.anchorDate;
-  const dates = dateRangeFor(view, date);
   try {
-    analyticsState.rangeCases = await fetchCasesForRange(dates);
+    if (view === 'trends') {
+      // One fast call — reads the pre-computed DailySummary sheet
+      const data = await api('summaries', {});
+      analyticsState.summaries = data.summaries || [];
+    } else {
+      const dates = dateRangeFor(view, date);
+      analyticsState.rangeCases = await fetchCasesForRange(dates);
+    }
   } catch (e) {
     if (body) body.innerHTML = `<div class="analytics-loading" style="color:#b91c1c;">Failed to load analytics: ${escapeHtml(e.message)}</div>`;
     analyticsState.loading = false;
@@ -4066,6 +4302,14 @@ function attachAnalyticsHandlers() {
       refreshAnalyticsBody();
     });
   }
+  // Calendar heatmap: click any day to open its full Day review
+  $$('#ot-analytics [data-cal-date]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      analyticsState.view = 'day';
+      analyticsState.anchorDate = cell.dataset.calDate;
+      refreshAnalyticsBody();
+    });
+  });
 }
 
 /* =========================================================
