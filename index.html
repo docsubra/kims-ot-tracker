@@ -1826,13 +1826,20 @@ table.data tbody tr:hover { background: var(--surface-2); }
    These overrides come AFTER the base rules and win the cascade.
    ========================================================= */
 
+/* KIMS Hospitals brand palette — adjust these two values to match
+   the logo exactly if the shade differs on your letterhead. */
+.board, .lobby {
+  --kims-primary: #5B2D86;   /* KIMS deep violet (wordmark) */
+  --kims-accent:  #F26B21;   /* KIMS warm orange (petal motif) */
+}
+
 /* ---- Reception Board ---- */
 .board {
-  background: #eef2f7;
+  background: #f6f4fa;       /* whisper-light violet tint of the brand */
   color: #14213d;
 }
 .board-head { border-bottom: 2px solid #dbe3ee; }
-.board-head h1 { color: #14213d; }
+.board-head h1 { color: var(--kims-primary); }
 .board-head .sub { color: #5b6b82; opacity: 1; }
 .board-clock .time { color: #14213d; }
 .board-clock .date { color: #5b6b82; opacity: 1; }
@@ -1844,7 +1851,7 @@ table.data tbody tr:hover { background: var(--surface-2); }
   overflow: hidden;
 }
 .board-table thead th {
-  background: #14213d;
+  background: var(--kims-primary);
   color: rgba(255,255,255,0.92);
   border-bottom: none;
 }
@@ -1862,8 +1869,8 @@ table.data tbody tr:hover { background: var(--surface-2); }
 /* Soft status tints — these read correctly on light backgrounds */
 .board-table tr.warn td { background: #fff7e6 !important; }
 .board-table tr.danger td { background: #fdecec !important; }
-.board-table tr.called td { background: #fdf6e0 !important; }
-.board-table tr.called td:first-child { border-left: 4px solid #F6B100 !important; }
+.board-table tr.called td { background: #fdefe5 !important; }
+.board-table tr.called td:first-child { border-left: 4px solid var(--kims-accent) !important; }
 .board-table tr.called.warn td { background: #fdecec !important; }
 .board-table tr.called.warn td:first-child { border-left: 4px solid #dc2626 !important; }
 .board-foot { color: #5b6b82; opacity: 1; border-top: 1px solid #dbe3ee; }
@@ -1871,10 +1878,10 @@ table.data tbody tr:hover { background: var(--surface-2); }
 
 /* ---- Patient Lobby ---- */
 .lobby {
-  background: #eef2f7;
+  background: #f6f4fa;
   color: #14213d;
 }
-.lobby-head h1 { color: #14213d; }
+.lobby-head h1 { color: var(--kims-primary); }
 .lobby-head .sub { color: #5b6b82; opacity: 1; }
 .lobby-clock .time { color: #14213d; }
 .lobby-clock .date { color: #5b6b82; opacity: 1; }
@@ -1883,7 +1890,7 @@ table.data tbody tr:hover { background: var(--surface-2); }
   border: 1px solid #dbe3ee;
   box-shadow: 0 6px 20px rgba(20, 33, 61, 0.06);
 }
-.lobby-tile .token { color: #14213d; }
+.lobby-tile .token { color: var(--kims-primary); }
 .lobby-tile .ot-tag { background: #eef2f7; color: #14213d; }
 .lobby-tile .surgeon { color: #5b6b82; }
 .lobby-tile .stage-text { color: #1e293b; }
@@ -1910,6 +1917,22 @@ table.data tbody tr:hover { background: var(--surface-2); }
 .lobby-foot .privacy-block { color: #5b6b82; }
 .lobby-foot .privacy-block .privacy-strong { color: #14213d; }
 .lobby-foot .refresh-block { color: #94a3b8; }
+
+/* ---- "Patient Called" elements re-pointed to the KIMS accent ---- */
+.stage-pill.called-pill {
+  background: #F26B21;
+  color: white;
+}
+.stage-pill.called-pill.overdue { background: #dc2626; }
+.case-actions .btn.callfor {
+  background: #F26B21;
+  color: white;
+  border-color: #F26B21;
+}
+.case-actions .btn.callfor:hover { background: #d95a15; border-color: #d95a15; }
+.called-banner { background: #F26B21; color: white; }
+.case-item.called { border-left-color: #F26B21; }
+.board-called-strip { background: #F26B21; color: white; }
 
 
 </style>
@@ -1964,7 +1987,7 @@ const CONFIG = {
 // Both pathways then converge to 'discharged' (handover complete).
 const STAGES = [
   { tv: '#94a3b8', id: 'registered',           label: 'Registered',                     lobby: 'In Preoperative Area',          color: 'stage-registered' },
-  { tv: '#F6B100', id: 'sent_for',             label: 'Patient Called',                 lobby: 'In Preoperative Area',          color: 'stage-called' },
+  { tv: '#F26B21', id: 'sent_for',             label: 'Patient Called',                 lobby: 'In Preoperative Area',          color: 'stage-called' },
   { tv: '#22d3ee', id: 'preop',                label: 'In Pre-Op',                      lobby: 'In Preoperative Area',         color: 'stage-preop' },
   { tv: '#60a5fa', id: 'in_ot',                label: 'In OT',                          lobby: 'Surgery in progress', color: 'stage-in-ot' },
   { tv: '#a78bfa', id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
@@ -1988,6 +2011,29 @@ const SPECIALTIES = [
   'ENT', 'Ophthalmology', 'Plastic Surgery', 'Neurosurgery', 'Cardiothoracic',
   'Vascular', 'Paediatric Surgery', 'Dental/Maxillofacial', 'Endoscopy', 'Other'
 ];
+
+/* ---------- BUILD VERSION & TV AUTO-UPDATE ----------
+   The TVs run 24/7 and never reload the page on their own; data
+   refreshes via API but the HTML itself would stay stale after a
+   deploy. This checker (lobby/board only — never the staff view,
+   which may hold a half-filled form) re-fetches the page every
+   10 minutes with cache bypassed and reloads if the deployed
+   BUILD_VERSION differs from the running one. */
+const BUILD_VERSION = '2.1.0';
+let tvUpdateCheckerStarted = false;
+function startTvAutoUpdate() {
+  if (tvUpdateCheckerStarted) return;
+  tvUpdateCheckerStarted = true;
+  setInterval(async () => {
+    try {
+      const res = await fetch(window.location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const text = await res.text();
+      const m = text.match(/BUILD_VERSION = '([^']+)'/);
+      if (m && m[1] !== BUILD_VERSION) window.location.reload();
+    } catch (e) { /* offline or file:// — try again next cycle */ }
+  }, 10 * 60 * 1000);
+}
 
 /* ---------- STATE ---------- */
 // Unlock flags persist in localStorage so staff don't retype the PIN on
@@ -4579,7 +4625,7 @@ function renderLobby() {
           Please approach the OT reception desk for any questions about your relative's status.
         </div>
         <div class="refresh-block">
-          Updates every ${CONFIG.REFRESH_MS/1000}s<br>Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'}
+          Updates every ${CONFIG.REFRESH_MS/1000}s · ORBIT v${BUILD_VERSION}<br>Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'}
         </div>
       </div>
     </div>
@@ -4665,6 +4711,7 @@ function attachLobbyHandlers() {
     splashTimers.initialised = true;
     startLobbySplash();
   }
+  startTvAutoUpdate();
 }
 let lobbyClockTimer = null;
 
@@ -4904,7 +4951,7 @@ function renderBoard() {
           <span><span class="swatch" style="background:#F6B100;"></span>Patient called</span>
           <span><span class="swatch" style="background:#ef4444;"></span>Delayed / awaiting</span>
         </div>
-        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Working day resets at 7 AM IST</div>
+        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Working day resets at 7 AM IST · ORBIT v${BUILD_VERSION}</div>
       </div>
     </div>
   `;
@@ -4964,6 +5011,7 @@ function renderBoardRowCase(theatre, c, isFirstForOT) {
 
 let boardClockTimer = null;
 function attachBoardHandlers() {
+  startTvAutoUpdate();
   if (boardClockTimer) clearInterval(boardClockTimer);
   boardClockTimer = setInterval(() => {
     const t = $('#board-time');
