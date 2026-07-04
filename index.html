@@ -1941,6 +1941,80 @@ table.data tbody tr:hover { background: var(--surface-2); }
 .board-called-strip { background: #F6B100; color: #0a1424; }
 
 
+
+/* =========================================================
+   RECEPTION BOARD — NHS-BLUE SIGNAGE THEME (v2.4)
+   Inspired by UK road signage (Kinneir & Calvert): flat NHS
+   Blue #005EB8, bold white names, and a journey-progression
+   chip system — cool while waiting, warming through theatre,
+   magenta at surgery, cooling after, green ONLY at the ward.
+   Outline chips (white + coloured ring) mean "in a care unit
+   now": green ring = PACU, crimson ring = ICU.
+   The family lobby deliberately keeps its calm light theme.
+   These rules follow the light-theme block and win the cascade
+   for the board only.
+   ========================================================= */
+.board {
+  background: #005EB8;
+  color: #ffffff;
+}
+.board-head { border-bottom: 2px solid rgba(255,255,255,0.35); }
+.board-head h1 { color: #ffffff; }
+.board-head .sub { color: rgba(255,255,255,0.78); }
+.board-clock .time { color: #ffffff; }
+.board-clock .date { color: rgba(255,255,255,0.78); }
+.board-table-wrap {
+  background: #0054A6;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.board-table thead th {
+  background: #003E7E;
+  color: rgba(255,255,255,0.95);
+}
+.board-table td {
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255,255,255,0.16);
+  background: transparent;
+}
+.board-table .col-ot { color: #ffffff; }
+.board-table .col-ot-cont { color: rgba(255,255,255,0.55); }
+.board-table .col-patient { color: #ffffff; font-weight: 700; }
+.board-table .col-procedure, .board-table .col-surgeon { color: rgba(255,255,255,0.80); }
+/* Completed: fully readable, visually secondary via a deeper band */
+.board-table tbody tr.completed { opacity: 1; }
+.board-table tr.completed td { color: rgba(255,255,255,0.80); background: rgba(0,0,0,0.12); }
+.board-table tr.completed .col-patient { color: rgba(255,255,255,0.85); }
+.board-table tr.completed .col-procedure,
+.board-table tr.completed .col-surgeon { color: rgba(255,255,255,0.60); }
+/* Status tints on flat blue */
+.board-table tr.warn td { background: rgba(255,204,0,0.16) !important; }
+.board-table tr.danger td { background: rgba(228,27,71,0.24) !important; }
+.board-table tr.called td { background: rgba(255,204,0,0.16) !important; }
+.board-table tr.called td:first-child { border-left: 5px solid #FFCC00 !important; }
+.board-table tr.called.warn td { background: rgba(228,27,71,0.24) !important; }
+.board-table tr.called.warn td:first-child { border-left: 5px solid #E41B47 !important; }
+.board-foot { color: rgba(255,255,255,0.75); border-top: 1px solid rgba(255,255,255,0.3); }
+.board-legend { color: rgba(255,255,255,0.85); }
+
+/* ---- Journey-progression stage chips ---- */
+.board-table .stage-pill { font-weight: 800; letter-spacing: 0.04em; }
+.board-table .sp-registered { background: #ffffff; color: #003E7E; }
+.board-table .sp-preop { background: #7DE3F4; color: #003E7E; }
+.board-table .sp-in_ot { background: #FDBA74; color: #4A2500; }
+.board-table .sp-anaesthesia { background: #FB923C; color: #3B1D00; }
+.board-table .sp-prep_positioning { background: #F97316; color: #ffffff; }
+.board-table .sp-surgery { background: #EC4899; color: #ffffff; }
+.board-table .sp-completed { background: #F9A8D4; color: #500724; }
+.board-table .sp-emergence { background: #C4B5FD; color: #2E1065; }
+.board-table .sp-pacu { background: #ffffff; color: #15803D; border: 2px solid #4ADE80; }
+.board-table .sp-in_icu { background: #ffffff; color: #E41B47; border: 2px solid #E41B47; }
+.board-table .sp-discharged { background: #4ADE80; color: #052E16; }
+/* Called pill on blue: signage gold */
+.board-table .stage-pill.called-pill { background: #FFCC00; color: #003E7E; }
+.board-table .stage-pill.called-pill.overdue { background: #E41B47; color: #ffffff; }
+
 </style>
 </head>
 <body>
@@ -2025,7 +2099,7 @@ const SPECIALTIES = [
    which may hold a half-filled form) re-fetches the page every
    10 minutes with cache bypassed and reloads if the deployed
    BUILD_VERSION differs from the running one. */
-const BUILD_VERSION = '2.3.0';
+const BUILD_VERSION = '2.4.0';
 let tvUpdateCheckerStarted = false;
 function startTvAutoUpdate() {
   if (tvUpdateCheckerStarted) return;
@@ -4952,10 +5026,13 @@ function renderBoard() {
 
       <div class="board-foot">
         <div class="board-legend">
-          <span><span class="swatch" style="background:#fff; opacity:0.4;"></span>Available</span>
-          <span><span class="swatch" style="background:#60a5fa;"></span>Active case</span>
-          <span><span class="swatch" style="background:#F6B100;"></span>Patient called</span>
-          <span><span class="swatch" style="background:#ef4444;"></span>Delayed / awaiting</span>
+          <span><span class="swatch" style="background:#FFCC00;"></span>Patient called</span>
+          <span><span class="swatch" style="background:#FB923C;"></span>In theatre</span>
+          <span><span class="swatch" style="background:#EC4899;"></span>Surgery</span>
+          <span><span class="swatch" style="background:#fff; border:2px solid #4ADE80;"></span>In PACU</span>
+          <span><span class="swatch" style="background:#fff; border:2px solid #E41B47;"></span>In ICU</span>
+          <span><span class="swatch" style="background:#4ADE80;"></span>Ward</span>
+          <span><span class="swatch" style="background:#E41B47;"></span>Delayed</span>
         </div>
         <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Working day resets at 7 AM IST · ORBIT v${BUILD_VERSION}</div>
       </div>
@@ -5009,7 +5086,7 @@ function renderBoardRowCase(theatre, c, isFirstForOT) {
     <td class="col-stage">
       ${stage.id === 'sent_for'
         ? `<span class="stage-pill called-pill${since > 20*60*1000 ? ' overdue' : ''}">📞 PATIENT CALLED${since > 20*60*1000 ? ' · AWAITING' : ''}</span>`
-        : `<span class="stage-pill" style="background:${stage.tv}; color:#0a1424; font-weight:700;">${escapeHtml(stage.label)}</span>`}
+        : `<span class="stage-pill sp-${stage.id}">${escapeHtml(stage.label)}</span>`}
     </td>
     <td class="col-elapsed">${since != null ? fmtDuration(since) : ''}</td>
   </tr>`;
