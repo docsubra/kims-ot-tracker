@@ -1998,22 +1998,34 @@ table.data tbody tr:hover { background: var(--surface-2); }
 .board-foot { color: rgba(255,255,255,0.75); border-top: 1px solid rgba(255,255,255,0.3); }
 .board-legend { color: rgba(255,255,255,0.85); }
 
-/* ---- Journey-progression stage chips ---- */
-.board-table .stage-pill { font-weight: 800; letter-spacing: 0.04em; }
-.board-table .sp-registered { background: #ffffff; color: #003E7E; }
-.board-table .sp-preop { background: #7DE3F4; color: #003E7E; }
-.board-table .sp-in_ot { background: #FDBA74; color: #4A2500; }
-.board-table .sp-anaesthesia { background: #FB923C; color: #3B1D00; }
-.board-table .sp-prep_positioning { background: #F97316; color: #ffffff; }
-.board-table .sp-surgery { background: #EC4899; color: #ffffff; }
+/* ---- Journey-progression stage chips (v2.4.1: full-cell blocks,
+   every chip ring-bordered so status reads across the lobby) ---- */
+.board-table .stage-pill {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 2px solid #ffffff;
+}
+.board-table .sp-registered { background: #ffffff; color: #003E7E; border-color: #94A3B8; }
+.board-table .sp-preop { background: #ffffff; color: #0E7490; border-color: #22D3EE; }
+.board-table .sp-in_ot { background: #FFD8A8; color: #4A2500; }
+.board-table .sp-anaesthesia { background: #FFA94D; color: #3B1D00; }
+.board-table .sp-prep_positioning { background: #F97316; color: #331A00; }
+.board-table .sp-surgery { background: #F472B6; color: #500724; }
 .board-table .sp-completed { background: #F9A8D4; color: #500724; }
 .board-table .sp-emergence { background: #C4B5FD; color: #2E1065; }
-.board-table .sp-pacu { background: #ffffff; color: #15803D; border: 2px solid #4ADE80; }
-.board-table .sp-in_icu { background: #ffffff; color: #E41B47; border: 2px solid #E41B47; }
+.board-table .sp-pacu { background: #ffffff; color: #15803D; border-color: #4ADE80; }
+.board-table .sp-in_icu { background: #ffffff; color: #E41B47; border-color: #E41B47; }
 .board-table .sp-discharged { background: #4ADE80; color: #052E16; }
-/* Called pill on blue: signage gold */
+/* Called chip: signage gold; overdue keeps a thicker alarm ring */
 .board-table .stage-pill.called-pill { background: #FFCC00; color: #003E7E; }
-.board-table .stage-pill.called-pill.overdue { background: #E41B47; color: #ffffff; }
+.board-table .stage-pill.called-pill.overdue { background: #E41B47; color: #ffffff; border-width: 3px; }
 
 </style>
 </head>
@@ -2071,7 +2083,7 @@ const STAGES = [
   { tv: '#22d3ee', id: 'preop',                label: 'In Pre-Op',                      lobby: 'In Preoperative Area',         color: 'stage-preop' },
   { tv: '#60a5fa', id: 'in_ot',                label: 'In OT',                          lobby: 'Surgery in progress', color: 'stage-in-ot' },
   { tv: '#a78bfa', id: 'anaesthesia',          label: 'Anaesthesia Started',            lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
-  { tv: '#a78bfa', id: 'prep_positioning',     label: 'Surgical Prep & Positioning',    lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
+  { tv: '#a78bfa', id: 'prep_positioning',     label: 'Surgical Prep & Positioning', tvLabel: 'Surgical Prep',    lobby: 'Surgery in progress',     color: 'stage-anaesthesia' },
   { tv: '#f472b6', id: 'surgery',              label: 'Surgery Started',                lobby: 'Surgery in progress',      color: 'stage-surgery' },
   { tv: '#34d399', id: 'completed',            label: 'Surgery Completed',              lobby: 'Surgery complete — preparing for recovery',  color: 'stage-completed' },
   { tv: '#34d399', id: 'emergence',            label: 'Emergence & Recovery',           lobby: 'Surgery complete — preparing for recovery',  color: 'stage-completed' },
@@ -2099,7 +2111,7 @@ const SPECIALTIES = [
    which may hold a half-filled form) re-fetches the page every
    10 minutes with cache bypassed and reloads if the deployed
    BUILD_VERSION differs from the running one. */
-const BUILD_VERSION = '2.4.0';
+const BUILD_VERSION = '2.4.1';
 let tvUpdateCheckerStarted = false;
 function startTvAutoUpdate() {
   if (tvUpdateCheckerStarted) return;
@@ -5013,7 +5025,7 @@ function renderBoard() {
                   <th style="width:200px;">Patient</th>
                   <th class="col-procedure-h">Procedure</th>
                   <th class="col-surgeon-h" style="width:160px;">Surgeon</th>
-                  <th style="width:200px;">Stage</th>
+                  <th style="width:240px;">Stage</th>
                   <th style="width:80px; text-align:right;">Time</th>
                 </tr>
               </thead>
@@ -5086,7 +5098,7 @@ function renderBoardRowCase(theatre, c, isFirstForOT) {
     <td class="col-stage">
       ${stage.id === 'sent_for'
         ? `<span class="stage-pill called-pill${since > 20*60*1000 ? ' overdue' : ''}">📞 PATIENT CALLED${since > 20*60*1000 ? ' · AWAITING' : ''}</span>`
-        : `<span class="stage-pill sp-${stage.id}">${escapeHtml(stage.label)}</span>`}
+        : `<span class="stage-pill sp-${stage.id}">${escapeHtml(stage.tvLabel || stage.label)}</span>`}
     </td>
     <td class="col-elapsed">${since != null ? fmtDuration(since) : ''}</td>
   </tr>`;
