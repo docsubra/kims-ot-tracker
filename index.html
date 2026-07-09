@@ -2111,7 +2111,7 @@ const SPECIALTIES = [
    which may hold a half-filled form) re-fetches the page every
    10 minutes with cache bypassed and reloads if the deployed
    BUILD_VERSION differs from the running one. */
-const BUILD_VERSION = '2.4.1';
+const BUILD_VERSION = '2.4.2';
 let tvUpdateCheckerStarted = false;
 function startTvAutoUpdate() {
   if (tvUpdateCheckerStarted) return;
@@ -2179,8 +2179,14 @@ function fmtDuration(ms) {
   return `${m}m`;
 }
 function todayISO() {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  // IST calendar date - the working day flips at midnight IST, not UTC.
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+function yesterdayISO() {
+  return new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+function istMidnightToday() {
+  return Date.parse(todayISO() + 'T00:00:00+05:30');
 }
 function generateToken() {
   // OT-token like OT-247 - based on time so it's roughly sequential and short
@@ -2221,11 +2227,46 @@ async function api(action, payload = {}) {
   return data;
 }
 
+let _carry = { cases: [], fetched: 0, day: '' };
+
+/* Overnight carryover (v2.4.2): cases opened yesterday that have not
+   yet reached a terminal stage (Shifted to Ward OR Shifted to ICU -
+   both close the OT journey) stay on all views until complete. A case
+   whose terminal stage happened today also stays for the rest of today.
+   Yesterday is re-fetched every refresh while any carryover is open,
+   otherwise every 10 minutes. */
+function isTerminalStage(c) {
+  return !!(c.stages.discharged || c.stages.in_icu);
+}
+async function fetchCarryover() {
+  const yd = yesterdayISO();
+  if (_carry.day !== yd) _carry = { cases: [], fetched: 0, day: yd };
+  const hasOpen = _carry.cases.some(c => !isTerminalStage(c));
+  const stale = (Date.now() - _carry.fetched) > 10 * 60 * 1000;
+  if (!_carry.fetched || hasOpen || stale) {
+    try {
+      const data = await api('list', { date: yd });
+      const mid = istMidnightToday();
+      _carry.cases = (data.cases || []).map(normalizeCase)
+        .filter(c => {
+          const times = Object.values(c.stages).map(d => d.getTime());
+          const last = times.length ? Math.max(...times) : 0;
+          return !isTerminalStage(c) || last >= mid;
+        })
+        .map(c => ({ ...c, _carryover: true }));
+      _carry.fetched = Date.now();
+    } catch (e) { console.error(e); }
+  }
+  return _carry.cases;
+}
+
 async function fetchCases() {
   state.loading = true;
   try {
     const data = await api('list', { date: todayISO() });
-    state.cases = (data.cases || []).map(normalizeCase);
+    const todayCases = (data.cases || []).map(normalizeCase);
+    const carry = await fetchCarryover();
+    state.cases = [...carry, ...todayCases];
     state.lastFetch = new Date();
     state.online = true;
   } catch (e) {
@@ -3933,7 +3974,7 @@ async function fetchCasesForRange(dates) {
   for (const d of dates) {
     if (d === todayISO()) {
       // Use already-loaded cases for today (no API call)
-      state.cases.forEach(c => out.push({ ...c, _date: d }));
+      state.cases.filter(c => !c._carryover).forEach(c => out.push({ ...c, _date: d }));
     } else {
       const data = await api('list', { date: d });
       (data.cases || []).map(normalizeCase).forEach(c => out.push({ ...c, _date: d }));
@@ -5046,7 +5087,7 @@ function renderBoard() {
           <span><span class="swatch" style="background:#4ADE80;"></span>Ward</span>
           <span><span class="swatch" style="background:#E41B47;"></span>Delayed</span>
         </div>
-        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Working day resets at 7 AM IST · ORBIT v${BUILD_VERSION}</div>
+        <div>Auto-refresh every ${CONFIG.REFRESH_MS/1000}s · Last updated ${state.lastFetch ? fmtTime(state.lastFetch) : '—'} · Overnight cases stay visible until completed · ORBIT v${BUILD_VERSION}</div>
       </div>
     </div>
   `;
@@ -5091,7 +5132,7 @@ function renderBoardRowCase(theatre, c, isFirstForOT) {
 
   return `<tr class="${rowClass}">
     ${otCell}
-    <td class="col-token">${schedLine}${escapeHtml(c.token || '')}</td>
+    <td class="col-token">${c._carryover ? '<div style="font-size:10px; font-weight:700; color:#FFCC00; letter-spacing:0.05em;">🌙 OVERNIGHT</div>' : ''}${schedLine}${escapeHtml(c.token || '')}</td>
     <td class="col-patient" title="${escapeHtml(c.patientName || '')}">${escapeHtml(c.patientName || '—')}</td>
     <td class="col-procedure" title="${escapeHtml(c.procedure || c.specialty || '')}">${escapeHtml(c.procedure || c.specialty || '—')}</td>
     <td class="col-surgeon" title="${escapeHtml(c.surgeon || '')}">${escapeHtml(c.surgeon || '—')}</td>
